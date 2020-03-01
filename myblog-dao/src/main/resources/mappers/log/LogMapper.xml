@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kzm.blog.mapper.log.LogMapper">
+    <resultMap id="BaseResultMap" type="com.kzm.blog.common.entity.log.LogEntity">
+        <id property="id" column="id"></id>
+        <result property="ip" column="ip"></result>
+        <result property="method" column="method"></result>
+        <result property="module" column="module"></result>
+        <result property="nickname" column="nickname"></result>
+        <result property="operation" column="operation"></result>
+        <result property="params" column="time"></result>
+        <result property="time" column="time"></result>
+        <result property="userId" column="userid"></result>
+        <result property="createTime" column="create_time"></result>
+        <result property="updateTime" column="update_time"></result>
+    </resultMap>
+</mapper>

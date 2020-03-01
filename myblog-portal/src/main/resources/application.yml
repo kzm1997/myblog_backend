@@ -1,0 +1,33 @@
+#TomCat
+server:
+  tomcat:
+    uri-encoding: utf-8
+    max-connections: 1000
+    min-spare-threads: 30
+  port: 8096
+  connection-timeout: 5000ms
+  servlet:
+    context-path: /kblog
+mybatis-plus:
+  mapper-locations: classpath:mappers/**/*.xml
+  type-aliases-package: com.kzm.blog.common.entity
+  global-config:
+    db-config:
+      id-type: auto
+      field-strategy: not_empty
+  configuration:
+    cache-enabled: false
+spring:
+    jackson:
+      serialization:
+        write-dates-as-timestamps : true
+    mvc:
+    #restFul风格,当找不到页面时,正常抛出错误,不跳转页面
+      throw-exception-if-no-handler-found: true
+    profiles:
+      active: dev
+
+
+
+
+

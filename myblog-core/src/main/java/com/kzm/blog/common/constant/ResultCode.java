@@ -18,9 +18,20 @@ public enum ResultCode {
     USER_LOGIN_ERROR(20002, "账号或密码错误"),
     USER_ACCOUNT_FORBIDDEN(20003, "账号已被禁用"),
     USER_NOT_EXIST(20004, "用户不存在"),
-    EMAIL_HAS_EXISTED(2005,"邮箱已使用"),
+    EMAIL_HAS_EXISTED(2005, "邮箱已使用"),
     USER_HAS_EXISTED(20006, "用户已存在"),
-    USER_Register_ERROR(20007, "用户注册错误");
+    USER_Register_ERROR(20007, "用户注册错误"),
+
+    /* 系统错误：40001-49999 */
+    SYSTEM_INNER_ERROR(40001, "系统内部错误"),
+
+    /* 数据错误：50001-599999 */
+    RESULE_DATA_NONE(50001, "数据未找到"),
+    DATA_IS_WRONG(50002,"数据有误"),
+    DATA_ALREADY_EXISTED(50003,"数据已存在"),
+    DATA_INSERT_ERR(5004,"数据新增错误"),
+    DATA_UPDATE_ERR(5005,"数据更新错误");
+
     private Integer code;
 
     private String message;
@@ -41,10 +52,10 @@ public enum ResultCode {
         this.message = message;
     }
 
-    ResultCode(Integer code, String message) {
+      ResultCode(Integer code, String message) {
         this.code = code;
         this.message = message;
     }
 
 
-}
+    }

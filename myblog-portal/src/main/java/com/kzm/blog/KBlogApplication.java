@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Version
  */
 @SpringBootApplication
-@MapperScan("com.kzm.blog.mapper.*")
+@MapperScan("com.kzm.blog.mapper")
 public class KBlogApplication {
 
     public static void main(String[] args) {

@@ -51,7 +51,7 @@ public class LogAspect {
         LogEntity log = new LogEntity();
         Log logAnnotation = method.getAnnotation(Log.class);
 
-        log.setModule(logAnnotation.module());
+        log.setAimModule(logAnnotation.module());
         log.setOperation(logAnnotation.operation());
 
         //获取请求的方法名
@@ -70,7 +70,7 @@ public class LogAspect {
 
         //获取ip地址
         log.setIp(IPUtils.getIpaddr(request));
-        log.setTime(time);
+        log.setCostTime(time);
         log.setCreateTime(LocalDateTime.now());
 
 

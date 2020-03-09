@@ -41,7 +41,7 @@ hs_err_pid*
 *.iws
 
 ## Plugin-specific files:
-
+*.iml
 # IntelliJ
 /out/
 

@@ -28,7 +28,7 @@ public class LogEntity extends BaseEntity implements Serializable {
     private String method;
 
     @ApiModelProperty(value = "模块")
-    private String module;
+    private String aimModule;
 
     @ApiModelProperty(value = "昵称")
     private String nickname;
@@ -40,7 +40,7 @@ public class LogEntity extends BaseEntity implements Serializable {
     private String params;
 
     @ApiModelProperty(value = "花费时间")
-    private long time;
+    private long costTime;
 
     @ApiModelProperty(value = "用户id")
     private String userId;

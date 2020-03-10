@@ -8,7 +8,7 @@ package com.kzm.blog.common.constants;
  */
 public class Base {
 
-    public static final String CURRENT_USER = "currentUser";
+    public static final String TOKEN = "Authentication";
 
     //token缓冲前缀
     public static final String TOKEN_CACHE_PREFIX = "kblog.cache.token";

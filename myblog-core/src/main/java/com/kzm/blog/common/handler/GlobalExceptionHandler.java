@@ -21,20 +21,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Result handleException(Exception e){
-        log.error("系统内部异常,异常信息 {}",e.getMessage());
+    public Result handleException(Exception e) {
+        log.error("系统内部异常,异常信息 {}", e.getMessage());
         e.printStackTrace();
         return Result.error(ResultCode.SYSTEM_INNER_ERROR);
     }
 
     @ExceptionHandler(value = KBlogException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Result handleKblogException(KBlogException e){
-        log.error("系统错误:{}",e.getMessage());
-        return Result.error(e.getSattus(),e.getMessage());
+    public Result handleKblogException(KBlogException e) {
+        log.error("系统错误:{}", e.getMessage());
+        return Result.error(e.getSattus(), e.getMessage());
     }
-
-
 
 
 }

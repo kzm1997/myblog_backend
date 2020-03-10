@@ -10,8 +10,10 @@ public enum ResultCode {
     /* 参数错误：10001-19999 */
     PARAM_IS_INVALID(10001, "参数无效"),
     PARAM_IS_BLANK(10002, "参数为空"),
+    PARAM_ONLY_HAS(10005, "参数唯一性校验失败"),
     PARAM_TYPE_BIND_ERROR(10003, "参数类型错误"),
     PARAM_NOT_COMPLETE(10004, "参数缺失"),
+    PARAM_NOT_SAME_PASSWORD(10006, "密码确认不一致"),
 
     /* 用户错误：20001-29999*/
     USER_NOT_LOGGED_IN(20001, "用户未登录"),
@@ -20,6 +22,7 @@ public enum ResultCode {
     USER_NOT_EXIST(20004, "用户不存在"),
     EMAIL_HAS_EXISTED(2005, "邮箱已使用"),
     USER_HAS_EXISTED(20006, "用户已存在"),
+    USeR_PASSWD_ERROR(20008,"密码错误"),
     USER_Register_ERROR(20007, "用户注册错误"),
 
     /* 系统错误：40001-49999 */

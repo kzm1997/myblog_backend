@@ -33,8 +33,8 @@ public class PasswordHelper {
     }
 
     /**
-     * 验证密码
-     * @param userEntity
+     * 加密秘密,并获取加密的密码
+     *  @param userEntity
      * @return
      */
     public static String authenticatPassword(UserEntity userEntity){

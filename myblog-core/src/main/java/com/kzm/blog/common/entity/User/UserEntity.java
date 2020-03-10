@@ -3,6 +3,7 @@ package com.kzm.blog.common.entity.User;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.kzm.blog.common.base.BaseEntity;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.time.LocalDate;
 
@@ -14,6 +15,7 @@ import java.time.LocalDate;
  */
 @Data
 @TableName("sys_user")
+@Accessors(chain = true)
 public class UserEntity extends BaseEntity {
 
     private String account;

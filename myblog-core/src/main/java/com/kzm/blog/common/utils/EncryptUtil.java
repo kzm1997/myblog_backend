@@ -5,6 +5,9 @@ import javax.crypto.Cipher;
 import java.security.Key;
 import java.security.Security;
 
+/**
+ * DES加密
+ */
 public class EncryptUtil {
 
     //设置默认密匙
@@ -46,6 +49,11 @@ public class EncryptUtil {
         this(strDefaultKey);
     }
 
+    /**
+     *
+     * @param strKey  密钥
+     * @throws Exception
+     */
     EncryptUtil(String strKey) throws Exception {
         Security.addProvider(new com.sun.crypto.provider.SunJCE());
         Key key = getKey(strKey.getBytes());

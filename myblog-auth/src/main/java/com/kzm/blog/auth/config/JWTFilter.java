@@ -1,9 +1,11 @@
 package com.kzm.blog.auth.config;
 
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.kzm.blog.common.constants.Base;
 import com.kzm.blog.common.properties.KBlogProperties;
 import com.kzm.blog.common.utils.KblogUtils;
 import com.kzm.blog.common.utils.SpringContextUtil;
+import com.kzm.blog.common.utils.JWTToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -30,7 +32,7 @@ import java.io.PrintWriter;
 @Slf4j
 public class JWTFilter extends BasicHttpAuthenticationFilter {
 
-    private static final String TOKEN = "Authentication";
+
 
     private AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -79,14 +81,14 @@ public class JWTFilter extends BasicHttpAuthenticationFilter {
     @Override
     protected boolean isLoginAttempt(ServletRequest request, ServletResponse response) {
         HttpServletRequest req = (HttpServletRequest) request;
-        String token = req.getHeader(TOKEN);
+        String token = req.getHeader(Base.TOKEN);
         return token != null;
     }
 
     @Override
     protected boolean executeLogin(ServletRequest request, ServletResponse response) {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-        String token = httpServletRequest.getHeader(TOKEN);
+        String token = httpServletRequest.getHeader(Base.TOKEN);
         JWTToken jwtToken = new JWTToken(KblogUtils.decryptToken(token));
         try {
             //走shiro的流程

@@ -3,6 +3,9 @@ package com.kzm.blog.common.exception;
 import com.kzm.blog.common.constant.ResultCode;
 import lombok.Data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @Author: kouzm
  * @Description:
@@ -16,12 +19,13 @@ public class KBlogException extends RuntimeException {
 
     private String mymessgae;
 
-
     public KBlogException(ResultCode resultCode){
         super(resultCode.getMessage());
         this.sattus=resultCode.getCode();
         this.mymessgae=resultCode.getMessage();
     }
+
+
 
 
     private static final long serialVersionUID = -994962710559017255L;

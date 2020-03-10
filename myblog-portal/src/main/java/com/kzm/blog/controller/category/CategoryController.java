@@ -1,6 +1,5 @@
 package com.kzm.blog.controller.category;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.annotation.Log;
 import com.kzm.blog.common.entity.category.CategoryEntity;
@@ -13,7 +12,6 @@ import com.kzm.blog.service.category.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  * @Author: kouzm
@@ -45,4 +43,6 @@ public class CategoryController {
         CategoryEntity byId = categoryService.getById(id);
         return Result.success(new CategoryNameVo().setCategoryName(byId.getCategoryName()));
     }
+
+
 }

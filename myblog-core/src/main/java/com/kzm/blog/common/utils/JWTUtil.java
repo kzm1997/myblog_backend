@@ -6,6 +6,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.kzm.blog.common.properties.KBlogProperties;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
@@ -19,7 +20,7 @@ import java.util.Date;
 @Slf4j
 public class JWTUtil {
 
-    private static final long EXPIRE_TIME = 86400L; //默认token有效时间1天
+    private static final long EXPIRE_TIME = SpringContextUtil.getBean(KBlogProperties.class).getJwtTimeOut()*1000;
 
     /**
      * 验证token是否正确
@@ -71,7 +72,7 @@ public class JWTUtil {
 
         try {
             Date date = new Date(System.currentTimeMillis() + EXPIRE_TIME);
-            Algorithm algorithm = Algorithm.HMAC256(password);
+            Algorithm algorithm = Algorithm.HMAC256(password);  //用密码做密钥
             return JWT.create().withClaim("account", account).withExpiresAt(date).sign(algorithm);
         } catch (Exception e) {
             log.error("error: {}", e);

@@ -96,6 +96,13 @@ public class Result<T> implements Serializable {
         result.setMessage(message);
         return result;
     }
+    public static <T> Result<T> error(int status,String message,T data){
+        Result result=new Result();
+        result.setStatus(status);
+        result.setMessage(message);
+        result.setData(data);
+        return result;
+    }
 
     public static <T> Result<T> error(ResultCode resultCode, T data) {
         Result result = new Result<T>();

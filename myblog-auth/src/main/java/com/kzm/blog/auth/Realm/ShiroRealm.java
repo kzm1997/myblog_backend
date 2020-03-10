@@ -1,10 +1,14 @@
 package com.kzm.blog.auth.Realm;
 
-import com.kzm.blog.auth.config.JWTToken;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.kzm.blog.common.entity.User.UserEntity;
+import com.kzm.blog.common.utils.JWTToken;
 import com.kzm.blog.common.constants.Base;
 import com.kzm.blog.common.exception.RedisException;
 import com.kzm.blog.common.utils.JWTUtil;
 import com.kzm.blog.common.utils.KblogUtils;
+import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.redis.RedisService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -26,6 +30,9 @@ public class ShiroRealm extends AuthorizingRealm {
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private UserMapper userMapper;
 
 
     @Override
@@ -50,11 +57,12 @@ public class ShiroRealm extends AuthorizingRealm {
         //这里的token是从JWTFilter的 excuteLogin 方法传递过来的,已经经过了解密
         String token = (String) authenticationToken.getCredentials();
 
+
         //从redis里获取这个token
         String encryptToken = KblogUtils.encryptToken(token);
         String encryptTokenInRedis = null;
         try {
-            encryptTokenInRedis = redisService.get(Base.TOKEN_CACHE_PREFIX + encryptToken);
+            encryptTokenInRedis = redisService.get(Base.TOKEN_CACHE_PREFIX + StringPool.DOT+encryptToken);
         } catch (RedisException e) {
             e.printStackTrace();
         }
@@ -64,6 +72,13 @@ public class ShiroRealm extends AuthorizingRealm {
         }
         String account = JWTUtil.getAccount(token);
         if (StringUtils.isBlank(account)){
+            throw new AuthenticationException("token校验不通过");
+        }
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, account));
+        if (userEntity==null){
+            throw new AuthenticationException("token校验不通过");
+        }
+        if (!JWTUtil.verify(token,account,userEntity.getPassword())){
             throw new AuthenticationException("token校验不通过");
         }
         return new SimpleAuthenticationInfo(token,token,"kblog_realm");

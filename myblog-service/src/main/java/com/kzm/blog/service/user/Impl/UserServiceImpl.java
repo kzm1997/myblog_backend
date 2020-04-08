@@ -9,7 +9,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kzm.blog.common.base.BaseEntity;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.Bo.*;
+import com.kzm.blog.common.entity.User.vo.UserBaseInfoVo;
 import com.kzm.blog.common.entity.User.vo.UserEntityVo;
+import com.kzm.blog.common.entity.User.vo.UserRecommendVo;
+import com.kzm.blog.common.exception.KBlogParamException;
 import com.kzm.blog.common.utils.JWTToken;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.constants.Base;
@@ -22,6 +25,7 @@ import com.kzm.blog.common.utils.JWTUtil;
 import com.kzm.blog.common.utils.KblogUtils;
 import com.kzm.blog.common.utils.PasswordHelper;
 import com.kzm.blog.common.utils.TimeUtils;
+import com.kzm.blog.mapper.article.ArticleMapper;
 import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.cache.CacheService;
 import com.kzm.blog.service.redis.RedisService;
@@ -31,8 +35,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @Author: kouzm
@@ -49,6 +57,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Autowired
     private CacheService cacheService;
+
+    @Autowired
+    private ArticleMapper articleMapper;
 
     @Autowired
     private KBlogProperties blogProperties;
@@ -110,7 +121,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             throw new KBlogException(ResultCode.USER_ACCOUNT_FORBIDDEN);
         }
         //todo  更新用户登录时间
-
         //生成token,用户密码做token签名密钥,DES加密采用redis前缀
         String token = KblogUtils.encryptToken(JWTUtil.sign(entity.getAccount(), entity.getPassword()));
         LocalDateTime expireTime = LocalDateTime.now().plusSeconds(blogProperties.getJwtTimeOut());
@@ -146,6 +156,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
                     return true;
                 }
             }
+            case "nickname":{
+                Integer count = userMapper.selectCount(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getNickname, value));
+                if (count > 0) {
+                    return true;
+                }
+            }
+
         }
         return false;
     }
@@ -207,5 +224,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         return Result.success();
     }
 
+    @Override
+    public Result logout() {
+        //todo 退出登录
+        return null;
+    }
+
+    @Override
+    public Result getFerralUser() {
+        return null;
+    }
+
+    @Override
+    public Result getUser() {
+        String userName = KblogUtils.getUserName();
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
+        UserBaseInfoVo userBaseInfoVo=new UserBaseInfoVo();
+        BeanUtil.copyProperties(userEntity,userBaseInfoVo);
+        return Result.success(userBaseInfoVo);
+    }
+
+    @Override
+    public Result uploadAvatar(MultipartFile file) throws IOException {
+        if (file.isEmpty()){
+            throw new KBlogException(ResultCode.USER_AVATAR_ERROR);
+        }
+        String fileName=file.getOriginalFilename();
+        String filePath="/userAvatar/";
+        File dest=new File(filePath+fileName);
+        file.transferTo(dest);
+        log.info("头像上传成功");
+        return Result.success();
+    }
+
+    @Override
+    public Result checkForm(String key, String value) {
+        if (this.checkParam(value,key)){
+            throw new KBlogParamException(ResultCode.PARAM_ONLY_HAS);
+        }
+        return Result.success();
+    }
+
+    @Override
+    public Result getRecommend(){
+        List<UserRecommendVo> userRecommendVos= userMapper.selectUserRecommend();
+        //获取用户点赞总数
+        for (UserRecommendVo userRecommendVo : userRecommendVos) {
+           int likeNum= articleMapper.selectCountLikeByUId(userRecommendVo.getId());
+           userRecommendVo.setLikeNum(likeNum);
+        }
+        return Result.success(userRecommendVos);
+    }
 }
 

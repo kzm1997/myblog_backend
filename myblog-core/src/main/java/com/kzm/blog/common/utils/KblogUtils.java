@@ -1,7 +1,10 @@
 package com.kzm.blog.common.utils;
 
+import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.constants.Base;
+import com.kzm.blog.common.exception.KBlogException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -48,6 +51,9 @@ public class KblogUtils {
     public static String getUserName(){
         HttpServletRequest httpServeltRequest = HttpContextUtils.getHttpServeltRequest();
         String headerToken = httpServeltRequest.getHeader(Base.TOKEN);
+        if (StringUtils.isBlank(headerToken)){
+            throw new KBlogException(ResultCode.USER_NOT_LOGGED_IN);
+        }
         String decryptToken = KblogUtils.decryptToken(headerToken);
         String userName = JWTUtil.getAccount(decryptToken);
         return userName;

@@ -46,6 +46,10 @@ public class UserEntity extends BaseEntity {
 
     private String salt;
 
+    private String city;
+
+    private String job;
+
     private Integer status;
 
 }

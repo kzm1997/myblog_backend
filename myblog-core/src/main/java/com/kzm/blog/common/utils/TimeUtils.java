@@ -3,7 +3,9 @@ package com.kzm.blog.common.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -37,5 +39,10 @@ public class TimeUtils  {
      */
     public static String LocalDateTimeToString(LocalDateTime localDateTime){
         return TimeUtils.LocalDateTimeToString(localDateTime,FULL_TIME_PATTERN);
+    }
+
+    public static String YearMonthToString(YearMonth localDate, String pattern){
+      DateTimeFormatter df=DateTimeFormatter.ofPattern(pattern);
+      return df.format(localDate);
     }
 }

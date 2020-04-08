@@ -46,6 +46,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public Long del(String... key) throws RedisException {
         return this.excuteByJedis(j -> j.del(key));
+
     }
 
     @Override

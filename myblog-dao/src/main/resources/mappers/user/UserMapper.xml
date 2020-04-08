@@ -26,5 +26,17 @@
         id,account,password,avatar,email,sex,person_link,birthday,company,
         school,github,qq,nickname,motto,salt,status
     </sql>
+    <select id="getIdByAccount" resultType="java.lang.Integer">
+        select id from  sys_user where account=#{userName}
+    </select>
+    <select id="selectUserRecommend" resultType="com.kzm.blog.common.entity.User.vo.UserRecommendVo">
+             select
+        su.id,
+       su.nickname  as  nickName,
+       su.avatar,
+      count(sf.id) as  fansNum
+      from sys_user su inner join sys_flow  sf on sf.followed_id=su.id  order by fansNum limit 5
+         </select>
+
 
 </mapper>

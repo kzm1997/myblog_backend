@@ -3,6 +3,7 @@ package com.kzm.blog.common.entity.article;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.kzm.blog.common.base.BaseEntity;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 
 /**
@@ -13,6 +14,7 @@ import lombok.Data;
  */
 @TableName("article")
 @Data
+@Accessors(chain = true)
 public class ArticleEntity  extends BaseEntity {
 
     private String title;
@@ -33,7 +35,9 @@ public class ArticleEntity  extends BaseEntity {
 
     private String publish;
 
-    private String categoryId;
+    private Integer recommend;
+
+
 
 
 }

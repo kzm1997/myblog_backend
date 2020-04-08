@@ -13,29 +13,74 @@
     <sql id="Base_Column_List">
         id,category_name,avatar,parent_id
     </sql>
+    <insert id="insertRelation">
+        insert into article_category(article_id, category_id) values
+        <foreach collection="tags" item="item" separator="," index="index">
+            (#{articleId},#{item})
+        </foreach>
+    </insert>
 
     <select id="selectCategoryVoPage" resultType="com.kzm.blog.common.entity.category.vo.CategoryVo">
         select
-           c.id,
-           c.category_name,
-           c.avatar,
-           count(a.category_id) as articles
-           from  category c left join  article a on instr(category_id,c.id)
-           <where>
-              <if test="categoryBo.id==null or categoryBo.id == ''">
-                   c.parent_id !='-1'
-              </if>
-               <if test="categoryBo.id !=null and categoryBo.id!=''">
-                  c.parent_id=#{categoryBo.id}
-               </if>
-           </where>
-            group by c.id
-          <if test="categoryBo.sort !=null and category.sort !=''">
-              order by categoryBo.sort
-              <if test="categoryBo.sortBy !=null and categoryBo.sortBy !=''">
-                     #{categoryBo.sortBy}
-              </if>
-          </if>
+        c.id,
+        c.category_name,
+        c.avatar
+        from category c
+        <where>
+            <if test="categoryBo.id==null or categoryBo.id == ''">
+                c.parent_id !='-1'
+            </if>
+            <if test="categoryBo.id !=null and categoryBo.id!=''">
+                c.parent_id=#{categoryBo.id}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectTagByparent" resultType="com.kzm.blog.common.entity.category.vo.CategoryShortVo">
+        select
+        id,
+        category_name,
+        parent_id
+        from
+        category
+        <where>
+            <if test="id==0">
+                parent_id !='-1' limit 10
+            </if>
+            <if test="id==-1">
+                parent_id !='-1' limit 10
+            </if>
+            <if test="id!=null and id !=''">
+                parent_id =#{id}
+            </if>
+        </where>
+    </select>
+    <select id="getHot" resultType="com.kzm.blog.common.entity.category.vo.CategoryNameVo">
+        select
+        c.id,
+        c.category_name,
+        count(ac.category_id) as articles
+       from category c inner  join article_category ac  on c.id=ac.category_id
+       order by articles limit 7
+    </select>
+
+    <select id="getParentId" resultType="java.lang.Integer">
+      select  parent_id  from  category where  id=#{id}
+    </select>
+    <select id="selectByArticleId" resultType="com.kzm.blog.common.entity.category.vo.CategoryNameVo">
+       select
+       c.id,
+       c.category_name
+       from  category c inner join  article_category ac on c.id=ac.category_id
+       where ac.article_id=#{articleId}
+    </select>
+    <select id="selectArticles" resultType="com.kzm.blog.common.entity.category.vo.CategoryVo">
+       select
+       c.id,
+       count(distinct ac.article_id) as articles
+       from category c inner join article_category ac on c.id = ac.category_id
+       group by c.id
 
     </select>
+
 </mapper>

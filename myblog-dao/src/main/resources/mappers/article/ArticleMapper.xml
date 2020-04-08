@@ -14,12 +14,38 @@
         <result property="commentNum" column="comment_num"></result>
         <result property="likeNum" column="like_num"></result>
         <result property="publish" column="publish"></result>
-        <result property="categoryId" column="category_id"></result>
         <result property="createTime" column="create_time"></result>
         <result property="updateTime" column="update_time"></result>
     </resultMap>
-
+    <!--  <resultMap id="ArticleShortMap" type="com.kzm.blog.common.entity.article.vo.ArticleShortVo" extends="BaseResultMap">
+          <result property="nickname" column="nickname"></result>
+          <result property="avatar" column="avatar"></result>
+          <collection property="categorys" javaType="com.kzm.blog.common.entity.category.vo.CategoryShortVo">
+              <id property="id" column="cid"></id>
+              <result property="categoryName" column="category_name"></result>
+          </collection>
+      </resultMap>-->
     <sql id="Base_Column_List">
         id,title,description,author_id,content,content_format,
         read_num,comment_num,like_num,publish,catebgory_id,create_time,update_time </sql>
+
+    <select id="selectShortByTag" resultType="com.kzm.blog.common.entity.article.vo.ArticleShortVo">
+         select
+          a.id,
+          a.title,
+          a.description,
+          a.read_num,
+          a.comment_num,
+          a.author_id,
+          a.update_time,
+          u.avatar,
+          u.nickname
+          from  article a inner join sys_user u on a.author_id=u.id
+          inner  join article_category ac on  a.id=ac.article_id
+          where  ac.category_id=#{articleShortBo.id}
+    </select>
+
+    <select id="selectCountLikeByUId" resultType="java.lang.Integer">
+          select sum(like_num) from  article where author_id=#{user_id}
+    </select>
 </mapper>

@@ -13,6 +13,7 @@ public enum ResultCode {
     PARAM_ONLY_HAS(10005, "参数唯一性校验失败"),
     PARAM_TYPE_BIND_ERROR(10003, "参数类型错误"),
     PARAM_NOT_COMPLETE(10004, "参数缺失"),
+
     PARAM_NOT_SAME_PASSWORD(10006, "密码确认不一致"),
 
     /* 用户错误：20001-29999*/
@@ -24,16 +25,21 @@ public enum ResultCode {
     USER_HAS_EXISTED(20006, "用户已存在"),
     USeR_PASSWD_ERROR(20008,"密码错误"),
     USER_Register_ERROR(20007, "用户注册错误"),
+    USER_AVATAR_ERROR(20008,"头像上传失败"),
 
     /* 系统错误：40001-49999 */
     SYSTEM_INNER_ERROR(40001, "系统内部错误"),
-
     /* 数据错误：50001-599999 */
     RESULE_DATA_NONE(50001, "数据未找到"),
     DATA_IS_WRONG(50002,"数据有误"),
     DATA_ALREADY_EXISTED(50003,"数据已存在"),
     DATA_INSERT_ERR(5004,"数据新增错误"),
-    DATA_UPDATE_ERR(5005,"数据更新错误");
+    DATA_UPDATE_ERR(5005,"数据更新错误"),
+    DATA_DELTE_ERR(5006,"数据删除错误"),
+
+    /* 文件上传： */
+    UPLOAD_ERROR(60001,"文件上传失败");
+
 
     private Integer code;
 

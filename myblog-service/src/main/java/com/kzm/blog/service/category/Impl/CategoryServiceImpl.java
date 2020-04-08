@@ -1,10 +1,14 @@
 package com.kzm.blog.service.category.Impl;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kzm.blog.common.Result;
 import com.kzm.blog.common.entity.category.CategoryEntity;
 import com.kzm.blog.common.entity.category.bo.CategoryBo;
+import com.kzm.blog.common.entity.category.vo.CategoryNameVo;
+import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
 import com.kzm.blog.common.entity.category.vo.CategoryVo;
 import com.kzm.blog.common.utils.MyPage;
 import com.kzm.blog.mapper.category.CategoryMapper;
@@ -12,8 +16,8 @@ import com.kzm.blog.service.category.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @Author: kouzm
@@ -28,18 +32,70 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryEnt
     private CategoryMapper categoryMapper;
 
 
-
     /**
      * 分页查询categoryid下的类
      * * @param categoryBo
+     *
      * @return
      */
     @Override
     public MyPage<CategoryVo> listCategoryById(CategoryBo categoryBo) {
-        Page<CategoryVo> page=new Page<>(categoryBo.getPageNum(),categoryBo. getPageSize());
+        Page<CategoryVo> page = new Page<>(categoryBo.getPageNum(), categoryBo.getPageSize());
         page = (Page<CategoryVo>) categoryMapper.selectCategoryVoPage(page, categoryBo);
+        //获取分类下的文章数
+        List<CategoryVo> records = page.getRecords();
+        List<CategoryVo> categoryVos = categoryMapper.selectArticles();
+        for (CategoryVo record : records) {
+            boolean flag=false;
+            for (CategoryVo categoryVo : categoryVos) {
+                if (record.getId() == categoryVo.getId()) {
+                        record.setArticles(categoryVo.getArticles());
+                        flag=true;
+                        break;
+                }
+            }
+            if (flag!=true){
+                record.setArticles(0);
+            }
+        }
+        page.setRecords(records);
         return new MyPage<CategoryVo>().getMyPage(page);
     }
 
+    /**
+     * 获取首页文章分类
+     *
+     * @return
+     */
+    @Override
+    public Result getIndexCategory() {
+        List<CategoryEntity> entities = categoryMapper.selectList(new QueryWrapper<CategoryEntity>().lambda()
+                .eq(CategoryEntity::getParentId, -1).select(CategoryEntity::getId, CategoryEntity::getCategoryName));
+        List<CategoryShortVo> categoryShortVos = new ArrayList<>();
+        categoryShortVos.add(new CategoryShortVo().setId(0).setCategoryName("全部"));
+        for (CategoryEntity entity : entities) {
+            CategoryShortVo categoryShortVo = new CategoryShortVo();
+            BeanUtil.copyProperties(entity, categoryShortVo);
+            categoryShortVos.add(categoryShortVo);
+        }
+        categoryShortVos.add(new CategoryShortVo().setId(-1).setCategoryName("热点"));
+        return Result.success(categoryShortVos);
+    }
 
+    @Override
+    public Result getTag(Integer id) {
+        //获取热点数据
+        if (id == -1) {
+            //todo 热点标签
+            id = 0;
+        }
+        List<CategoryShortVo> categoryShortVos = categoryMapper.selectTagByparent(id);
+        return Result.success(categoryShortVos);
+    }
+
+    @Override
+    public Result getHot() {
+        List<CategoryNameVo> categoryNameVos = categoryMapper.getHot();
+        return Result.success(categoryNameVos);
+    }
 }

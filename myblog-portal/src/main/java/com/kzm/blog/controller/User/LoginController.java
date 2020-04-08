@@ -13,6 +13,7 @@ import com.kzm.blog.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 
@@ -42,12 +43,20 @@ public class LoginController {
         return userService.login(userLoginBo);
     }
 
+    @GetMapping("/logout")
+    @Log(module = "用户模块", operation = "退出登录")
+    public Result logout() {
+        return userService.logout();
+    }
+
     @GetMapping("/checkParam")
     public Result checkParam(@RequestParam("value") @NotBlank String value,
-                             @RequestParam("type") @NotBlank String type)throws Exception{
+                             @RequestParam("type") @NotBlank String type) throws Exception {
         if (userService.checkParam(value, type)) {
             throw new KBlogException(ResultCode.PARAM_ONLY_HAS);
         }
         return Result.success();
     }
+
+
 }

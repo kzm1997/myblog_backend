@@ -7,6 +7,9 @@ import com.kzm.blog.common.entity.User.Bo.*;
 import com.kzm.blog.common.entity.User.UserEntity;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.exception.RedisException;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 
 public interface UserService extends IService<UserEntity> {
@@ -65,4 +68,36 @@ public interface UserService extends IService<UserEntity> {
      * @return
      */
     Result updateEmail(String newEmail);
+
+    /**
+     * 退出登录
+     * @return
+     */
+    Result logout();
+
+    /**
+     * 推介作者
+     * @return
+     */
+    Result getFerralUser();
+
+    /**
+     * 获取用户数据
+     * @return
+     */
+    Result getUser();
+
+    /**
+     * 上传头像
+     * @return
+     */
+    Result uploadAvatar(MultipartFile file) throws IOException;
+
+    Result checkForm(String key, String value);
+
+    /**
+     * 获取推介作者
+     * @return
+     */
+    Result getRecommend();
 }

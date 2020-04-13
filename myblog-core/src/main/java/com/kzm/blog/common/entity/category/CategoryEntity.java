@@ -24,5 +24,7 @@ public class CategoryEntity {
 
     private String avatar;
 
+    private String message;
+
     private Integer parentId;
 }

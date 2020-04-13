@@ -4,8 +4,10 @@ package com.kzm.blog.service.comment.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kzm.blog.common.Result;
+import com.kzm.blog.common.annotation.Log;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.UserEntity;
+import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.comment.CommentEntity;
 import com.kzm.blog.common.entity.comment.CommentUserLikeEntity;
 import com.kzm.blog.common.entity.comment.bo.CommentBaseBo;
@@ -15,10 +17,12 @@ import com.kzm.blog.common.entity.comment.vo.CommentSonVo;
 import com.kzm.blog.common.entity.comment.vo.CommentVo;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.utils.KblogUtils;
+import com.kzm.blog.mapper.article.ArticleMapper;
 import com.kzm.blog.mapper.comment.CommentMapper;
 import com.kzm.blog.mapper.comment.CommentUserLikeMapper;
 import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.comment.CommentService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +40,7 @@ import java.util.stream.Collectors;
  * @Version
  */
 @Service
+@Slf4j
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity> implements CommentService {
 
     @Autowired
@@ -46,6 +51,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
 
     @Autowired
     private CommentUserLikeMapper commentUserLikeMapper;
+
+    @Autowired
+    private ArticleMapper articleMapper;
 
     @Override
     @Transactional
@@ -61,6 +69,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         commentEntity.setLikeNum(0);
         int i = commentMapper.insert(commentEntity);
         if (i == 0) {
+            throw new KBlogException(ResultCode.DATA_INSERT_ERR);
+        }
+        //增加文章评论数
+        int result = articleMapper.addComments(commentBaseBo.getId());
+        if (result == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
         //获取评论
@@ -144,6 +157,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         if (i == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
+        //增加文章评论数
+        int result = articleMapper.addComments(commentSonBo.getId());
+        if (result == 0) {
+            throw new KBlogException(ResultCode.DATA_INSERT_ERR);
+        }
         return Result.success();
     }
 
@@ -168,13 +186,13 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
                 }
                 //增加点赞数
                 int add = commentMapper.likeNumAdd(likeBo.getCommentId());
-                if (add==0){
+                if (add == 0) {
                     throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
                 }
-            }else{
+            } else {
                 commentUserLikeEntity.setStatus(1);
                 commentUserLikeMapper.update(commentUserLikeEntity, new QueryWrapper<CommentUserLikeEntity>()
-                .lambda().eq(CommentUserLikeEntity::getId,commentUserLikeEntity.getId()));
+                        .lambda().eq(CommentUserLikeEntity::getId, commentUserLikeEntity.getId()));
             }
         } else if (likeBo.getType() == 0) {
             CommentUserLikeEntity commentUserLikeEntity = commentUserLikeMapper.selectOne(new QueryWrapper<CommentUserLikeEntity>().lambda()
@@ -187,11 +205,57 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
                 throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
             }
             //减少点赞
-            int flag= commentMapper.likeNumReduce(likeBo.getCommentId());
-            if (flag==0){
+            int flag = commentMapper.likeNumReduce(likeBo.getCommentId());
+            if (flag == 0) {
                 throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
             }
 
+        }
+        return Result.success();
+    }
+
+    @Override
+    @Transactional
+    public Result deleteComments(Integer id) {
+        CommentEntity commentEntity = commentMapper.selectById(id);
+        if (commentEntity.getParentId() == 0) {
+            //删除父子评论
+            try {
+                List<CommentEntity> commentEntities = commentMapper.selectList(new QueryWrapper<CommentEntity>().lambda().eq(CommentEntity::getParentId, commentEntity.getId()));
+                if (commentEntities.size() > 0) {
+                    commentMapper.deleteBatchIds(commentEntities.stream().map(CommentEntity::getId).collect(Collectors.toList()));
+                }
+                commentMapper.deleteById(id);
+                //减少文章评论数
+                ArticleEntity articleEntity = articleMapper.selectOne(new QueryWrapper<ArticleEntity>().lambda()
+                        .eq(ArticleEntity::getId, commentEntity.getOwnerId()));
+                articleEntity.setCommentNum(articleEntity.getCommentNum()-(commentEntities.size()+1));
+                articleMapper.update(articleEntity,new QueryWrapper<ArticleEntity>().lambda()
+                        .eq(ArticleEntity::getId,articleEntity.getId()));
+            } catch (Exception e) {
+               log.error("评论删除错误 {}",e);
+               throw new KBlogException(ResultCode.DATA_DELTE_ERR);
+            }
+        } else {
+            //如果子评论下还有@的子评论,一并删除
+            try {
+                List<CommentEntity> commentEntities = commentMapper.selectList(new QueryWrapper<CommentEntity>()
+                        .lambda().eq(CommentEntity::getTold, commentEntity.getFromId())
+                        .eq(CommentEntity::getParentId, commentEntity.getParentId()).ne(CommentEntity::getId,id));
+                if (commentEntities.size() > 0) {
+                    commentMapper.deleteBatchIds(commentEntities.stream().map(CommentEntity::getId).collect(Collectors.toList()));
+                }
+                commentMapper.deleteById(id);
+                //减少文章评论数
+                ArticleEntity articleEntity = articleMapper.selectOne(new QueryWrapper<ArticleEntity>().lambda()
+                        .eq(ArticleEntity::getId, commentEntity.getOwnerId()));
+                articleEntity.setCommentNum(articleEntity.getCommentNum()-(commentEntities.size()+1));
+                articleMapper.update(articleEntity,new QueryWrapper<ArticleEntity>().lambda()
+                        .eq(ArticleEntity::getId,articleEntity.getId()));
+            } catch (Exception e) {
+                log.error("评论删除错误 {}",e);
+                throw new KBlogException(ResultCode.DATA_DELTE_ERR);
+            }
         }
         return Result.success();
     }

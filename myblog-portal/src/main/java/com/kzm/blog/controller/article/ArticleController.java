@@ -41,7 +41,7 @@ public class ArticleController {
 
     @PostMapping("update")
     @Log(module = "文章模块", operation = "修改文章")
-    public Result updateArtice( ArticleUploadBo articleUploadBo) {
+    public Result updateArtice(@RequestBody ArticleUploadBo articleUploadBo) {
         return articleService.updateArticle(articleUploadBo);
     }
 
@@ -52,8 +52,14 @@ public class ArticleController {
     }
 
     @GetMapping("getRecommend")
-    @Log(module = "文章模块",operation = "获取推介文章")
-    public Result getRecommend(){
-        return  articleService.getRecommend();
+    @Log(module = "文章模块", operation = "获取推荐文章")
+    public Result getRecommend() {
+        return articleService.getRecommend();
+    }
+
+    @GetMapping("getEditArticle")
+    @Log(module = "文章模块", operation = "获取修改文章")
+    public Result getEditArticle(@RequestParam("id") Integer id) {
+        return articleService.getEditArticle(id);
     }
 }

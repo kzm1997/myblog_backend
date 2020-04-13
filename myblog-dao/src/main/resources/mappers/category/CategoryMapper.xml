@@ -19,6 +19,9 @@
             (#{articleId},#{item})
         </foreach>
     </insert>
+    <delete id="deleteArticle">
+        delete  from  article_category where  article_id=#{id}
+    </delete>
 
     <select id="selectCategoryVoPage" resultType="com.kzm.blog.common.entity.category.vo.CategoryVo">
         select
@@ -61,7 +64,8 @@
         c.category_name,
         count(ac.category_id) as articles
        from category c inner  join article_category ac  on c.id=ac.category_id
-       order by articles limit 7
+       group  by c.id
+       order by articles desc limit 8
     </select>
 
     <select id="getParentId" resultType="java.lang.Integer">

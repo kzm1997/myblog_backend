@@ -25,6 +25,8 @@ public class UserMaterialBo {
 
     private String company;
 
+    private String job;
+
     private LocalDate birthday;
 
 }

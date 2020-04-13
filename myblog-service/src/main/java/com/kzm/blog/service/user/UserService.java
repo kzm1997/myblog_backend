@@ -87,17 +87,16 @@ public interface UserService extends IService<UserEntity> {
      */
     Result getUser();
 
-    /**
-     * 上传头像
-     * @return
-     */
-    Result uploadAvatar(MultipartFile file) throws IOException;
+
 
     Result checkForm(String key, String value);
 
+
     /**
-     * 获取推介作者
+     * 用户关注
+     * @param userId
+     * @param type
      * @return
      */
-    Result getRecommend();
+    Result userLike(Integer userId, Integer type);
 }

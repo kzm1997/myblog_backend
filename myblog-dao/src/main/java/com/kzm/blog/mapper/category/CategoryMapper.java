@@ -42,5 +42,8 @@ public interface CategoryMapper extends BaseMapper<CategoryEntity> {
 
 
     List<CategoryVo> selectArticles();
+
+    int deleteArticle(@Param("id") Integer id);
+
 }
 

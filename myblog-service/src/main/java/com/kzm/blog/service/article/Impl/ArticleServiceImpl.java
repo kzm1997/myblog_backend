@@ -12,19 +12,23 @@ import com.kzm.blog.common.entity.User.vo.UserAuthorVo;
 import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.article.bo.ArticleShortBo;
 import com.kzm.blog.common.entity.article.bo.ArticleUploadBo;
+import com.kzm.blog.common.entity.article.vo.ArticleEditVo;
 import com.kzm.blog.common.entity.article.vo.ArticleRecommendVo;
 import com.kzm.blog.common.entity.article.vo.ArticleShortVo;
 import com.kzm.blog.common.entity.article.vo.ArticleViewVo;
 import com.kzm.blog.common.entity.category.CategoryEntity;
 import com.kzm.blog.common.entity.category.vo.CategoryNameVo;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
+import com.kzm.blog.common.entity.comment.CommentEntity;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.utils.KblogUtils;
 import com.kzm.blog.common.utils.MyPage;
 import com.kzm.blog.mapper.article.ArticleMapper;
 import com.kzm.blog.mapper.category.CategoryMapper;
+import com.kzm.blog.mapper.comment.CommentMapper;
 import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.article.ArticleService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,6 +55,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     /**
      * 通过分类id获取文章,0代表全部,-1代表热点文章
@@ -88,27 +95,51 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
         articleViewVo.setTags(categoryNameVos);
         //获取用户信息
         UserEntity userEntity = userMapper.selectById(articleEntity.getAuthorId());
-        UserAuthorVo authorVo=new UserAuthorVo();
-        BeanUtil.copyProperties(userEntity,authorVo);
+        UserAuthorVo authorVo = new UserAuthorVo();
+        BeanUtil.copyProperties(userEntity, authorVo);
+        //获取关注信息
+        String userName = KblogUtils.getUserName();
+        if (StringUtils.isNotBlank(userName)){
+            Integer userid = userMapper.getIdByAccount(userName);
+            int i = userMapper.selectIsLikeCount(userid, userEntity.getId());
+            if (i!=0){
+                authorVo.setLike(true);
+            }
+        }
         articleViewVo.setAuthorVo(authorVo);
         return Result.success(articleViewVo);
     }
 
     @Override
+    @Transactional
     public Result delteArticle(Integer id) {
         String userName = KblogUtils.getUserName();
         UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
         ArticleEntity articleEntity = articleMapper.selectById(id);
         if (!BeanUtil.isEmpty(userEntity) && !BeanUtil.isEmpty(articleEntity)) {
             if (userEntity.getId() == articleEntity.getAuthorId()) {
-                //删除文章
-                int i = articleMapper.deleteById(id);
-                if (i == 0) {
+                try {
+                    //删除文章
+                    articleMapper.deleteById(id);
+                    //删除关系
+                    categoryMapper.deleteArticle(id);
+                    //删除评论
+                    List<CommentEntity> commentEntities = commentMapper.selectList(new QueryWrapper<CommentEntity>().lambda()
+                            .eq(CommentEntity::getOwnerId, id));
+                    if (commentEntities.size()!=0){
+                        List<Integer> collect = commentEntities.stream().map(CommentEntity::getId).collect(Collectors.toList());
+                        commentMapper.deleteUsrLike(collect);
+                        commentMapper.delteArticle(id);
+                    }
+                } catch (Exception e) {
                     throw new KBlogException(ResultCode.DATA_DELTE_ERR);
                 }
+
             } else {
                 throw new UnauthorizedException();
             }
+        }else {
+            throw  new KBlogException(ResultCode.DATA_DELTE_ERR);
         }
         return Result.success();
     }
@@ -119,18 +150,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
         String userName = KblogUtils.getUserName();
         Integer id = userMapper.getIdByAccount(userName);
         ArticleEntity articleEntity = new ArticleEntity();
-
         articleEntity.setAuthorId(id).setContent(articleUploadBo.getContent())
                 .setContentFormat(articleUploadBo.getContentHtml())
                 .setTitle(articleUploadBo.getTitle())
                 .setDescription(articleUploadBo.getSummary())
-                .setPublish("0");
+                .setPublish("0")
+                .setCommentNum(0);
         int i = articleMapper.insert(articleEntity);
         if (i == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
+
         List<Integer> tags = articleUploadBo.getTags();
-        tags.add(0,Integer.parseInt(articleUploadBo.getCategory()));
+        tags.add(0, Integer.parseInt(articleUploadBo.getCategory()));
         int flag = categoryMapper.insertRelation(articleEntity.getId(), tags);
         if (flag == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
@@ -141,6 +173,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
     }
 
     @Override
+    @Transactional
     public Result updateArticle(ArticleUploadBo articleUploadBo) {
         String userName = KblogUtils.getUserName();
         UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
@@ -153,6 +186,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
                         .lambda().eq(ArticleEntity::getId, articleEntitynew.getId()));
                 if (i == 0) {
                     throw new KBlogException(ResultCode.DATA_DELTE_ERR);
+                }
+                //修改文章分类
+                categoryMapper.deleteArticle(articleUploadBo.getId());
+                List<Integer> tags = articleUploadBo.getTags();
+                tags.add(0, Integer.parseInt(articleUploadBo.getCategory()));
+                int flag = categoryMapper.insertRelation(articleEntity.getId(), tags);
+                if (flag == 0) {
+                    throw new KBlogException(ResultCode.DATA_INSERT_ERR);
                 }
             }
         } else {
@@ -175,6 +216,35 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
             articleViewVos.add(articleViewVo);
         }
         return Result.success(articleViewVos);
+    }
+
+    @Override
+    public Result getEditArticle(Integer id) {
+        String userName = KblogUtils.getUserName();
+        Integer userId = userMapper.getIdByAccount(userName);
+        ArticleEntity articleEntity = articleMapper.selectOne(new QueryWrapper<ArticleEntity>().lambda()
+                .eq(ArticleEntity::getId, id));
+        if (articleEntity==null){
+            return Result.error(ResultCode.RESULE_DATA_NONE);
+        }
+        if (articleEntity.getAuthorId()!=userId){
+            throw new  UnauthorizedException();
+        }
+        return Result.success(this.getEditVo(id));
+    }
+
+    private ArticleEditVo getEditVo(Integer id){
+        ArticleEntity articleEntity = articleMapper.selectById(id);
+        ArticleEditVo articleEditVo=new ArticleEditVo();
+        articleEditVo.setId(articleEntity.getId());
+        articleEditVo.setContent(articleEntity.getContent());
+        articleEditVo.setTitle(articleEntity.getTitle());
+        articleEditVo.setSummary(articleEntity.getDescription());
+        CategoryShortVo categoryShortVo=  articleMapper.selectCategory(id);
+        articleEditVo.setCategory(categoryShortVo);
+        List<CategoryShortVo> categoryShortVos=  articleMapper.selectTags(id);
+        articleEditVo.setTags(categoryShortVos);
+        return  articleEditVo;
     }
 
 

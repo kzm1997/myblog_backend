@@ -31,4 +31,11 @@ public interface CategoryService extends IService<CategoryEntity> {
      * @return
      */
     Result getHot();
+
+    /**
+     * 获取分类信息
+     * @param id
+     * @return
+     */
+    Result getMessage(Integer id);
 }

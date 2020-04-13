@@ -64,10 +64,8 @@ public class LogAspect {
         String id = JsonUtils.toJson(args[0]);
 
         log.setParams(id);
-
         //获取request;
         HttpServletRequest request=HttpContextUtils.getHttpServeltRequest();
-
         //获取ip地址
         log.setIp(IPUtils.getIpaddr(request));
         log.setCostTime(time);

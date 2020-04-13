@@ -1,20 +1,17 @@
 package com.kzm.blog.controller.User;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.annotation.Log;
-
 import com.kzm.blog.common.entity.User.Bo.ExMaterialBo;
 import com.kzm.blog.common.entity.User.Bo.PassWdBo;
 import com.kzm.blog.common.entity.User.Bo.UserMaterialBo;
-import com.kzm.blog.common.entity.User.UserEntity;
 import com.kzm.blog.common.utils.KblogUtils;
 import com.kzm.blog.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import javax.validation.Valid;
 
-import java.io.IOException;
 
 
 /**
@@ -32,7 +29,7 @@ public class UserController {
 
     @PostMapping("/modifypasswd")
     @Log(module = "用户模块", operation = "更新密码")
-    public Result changePassowrd(@RequestBody PassWdBo passWdBo) {
+    public Result changePassowrd(@RequestBody @Valid PassWdBo passWdBo) {
         String userName = KblogUtils.getUserName();
         return userService.changePassword(userName, passWdBo);
     }
@@ -57,7 +54,7 @@ public class UserController {
     }
 
     @GetMapping("/referral")
-    @Log(module = "用户模块", operation = "推介作者")
+    @Log(module = "用户模块", operation = "推荐作者")
     public Result referralUser() {
         return userService.getFerralUser();
     }
@@ -68,23 +65,16 @@ public class UserController {
         return userService.getUser();
     }
 
-    @PostMapping("/upload")
-    @Log(module = "用户模块",operation = "上传头像")
-    public Result uploadAvatar(@RequestParam("file")MultipartFile file) throws IOException {
-        return  userService.uploadAvatar(file);
-    }
-
-
     @GetMapping("/checkForm")
     @Log(module = "用户模块",operation = "用户信息唯一性校验")
     public Result checkForm(@RequestParam String key,@RequestParam String value){
         return  userService.checkForm(key,value);
     }
 
-   @GetMapping("/getUserRecommed")
-   @Log(module = "用户模块",operation = "获取推介作者")
-    public Result getUserRecommend(){
-        return  userService.getRecommend();
-   }
+    @GetMapping("/like")
+    @Log(module = "用户模块",operation = "关注")
+    public Result userlike(@RequestParam("userId") Integer userId,@RequestParam("type") Integer type){
+        return userService.userLike(userId,type);
+    }
 
 }

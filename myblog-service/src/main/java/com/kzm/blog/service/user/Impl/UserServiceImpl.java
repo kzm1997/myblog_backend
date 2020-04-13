@@ -9,15 +9,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kzm.blog.common.base.BaseEntity;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.Bo.*;
-import com.kzm.blog.common.entity.User.vo.UserBaseInfoVo;
-import com.kzm.blog.common.entity.User.vo.UserEntityVo;
-import com.kzm.blog.common.entity.User.vo.UserRecommendVo;
-import com.kzm.blog.common.exception.KBlogParamException;
+import com.kzm.blog.common.entity.User.vo.*;
+import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.utils.JWTToken;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.constants.Base;
 import com.kzm.blog.common.entity.User.UserEntity;
-import com.kzm.blog.common.entity.User.vo.UserInfoVo;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.exception.RedisException;
 import com.kzm.blog.common.properties.KBlogProperties;
@@ -35,12 +32,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * @Author: kouzm
@@ -66,6 +63,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Autowired
     private RedisService redisService;
+
 
     @Override
     public void register(UserRegisterBo userRegisterBo) throws KBlogException, RedisException, JsonProcessingException {
@@ -156,7 +154,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
                     return true;
                 }
             }
-            case "nickname":{
+            case "nickname": {
                 Integer count = userMapper.selectCount(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getNickname, value));
                 if (count > 0) {
                     return true;
@@ -180,7 +178,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         if (!StringUtils.equals(passwordTest, userEntity.getPassword())) {
             throw new KBlogException(ResultCode.USeR_PASSWD_ERROR);
         }
-
         //修改密码
         PasswordHelper.encryptPassword(userTest);
         BeanUtil.copyProperties(userTest, userEntity, CopyOptions.create().setIgnoreNullValue(true));
@@ -191,10 +188,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     @Override
     public Result updateExMaterial(ExMaterialBo exMaterialBo) {
         String userName = KblogUtils.getUserName();
-        UserEntity userEntity=new UserEntity();
-        BeanUtil.copyProperties(exMaterialBo,userEntity);
+        UserEntity userEntity = new UserEntity();
+        BeanUtil.copyProperties(exMaterialBo, userEntity);
         int i = userMapper.update(userEntity, new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
-        if (i==0){
+        if (i == 0) {
             throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
         }
         return Result.success();
@@ -203,10 +200,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     @Override
     public Result updateUserMaterial(UserMaterialBo userMaterialBo) {
         String userName = KblogUtils.getUserName();
-        UserEntity userEntity=new UserEntity();
-        BeanUtil.copyProperties(userMaterialBo,userEntity);
+        UserEntity userEntity = new UserEntity();
+        BeanUtil.copyProperties(userMaterialBo, userEntity);
         int i = userMapper.update(userEntity, new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
-        if (i==0){
+        if (i == 0) {
             throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
         }
         return Result.success();
@@ -215,10 +212,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     @Override
     public Result updateEmail(String newEmail) {
         String userName = KblogUtils.getUserName();
-        UserEntity userEntity=new UserEntity();
+        UserEntity userEntity = new UserEntity();
         userEntity.setEmail(newEmail);
         int i = userMapper.update(userEntity, new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
-        if (i==0){
+        if (i == 0) {
             throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
         }
         return Result.success();
@@ -232,48 +229,97 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Override
     public Result getFerralUser() {
-        return null;
+        List<Integer> except = new ArrayList<>();
+        String userName = KblogUtils.getUserName();
+        if (StringUtils.isNotBlank(userName)) {
+            Integer id = userMapper.getIdByAccount(userName);
+            List<Integer> likeUser = userMapper.selectUnLikeUser(id);
+            likeUser.add(id);
+            except = likeUser;
+        }
+        Integer count = userMapper.selectCount(new QueryWrapper<>());
+        ArrayList<Integer> arrayList = getRandomNonRepeatingIntegers(5, 1, count, except);
+        List<UserFerralVo> list = userMapper.getFerralUser(arrayList);
+        List<Integer> collect = list.stream().map(UserFerralVo::getId).collect(Collectors.toList());
+        List<UserFerralVo> userFerralVos = articleMapper.getWordCount(collect);
+        for (UserFerralVo userFerralVo : list) {
+            boolean flag = true;
+            for (UserFerralVo ferralVo : userFerralVos) {
+                if (ferralVo.getId() == userFerralVo.getId()) {
+                    userFerralVo.setTotalWord(ferralVo.getTotalWord());
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                userFerralVo.setTotalWord(0);
+            }
+        }
+        return Result.success(list);
+    }
+
+    private Integer getRandomInt(int min, int max) {
+        Random random = new Random();
+        return random.nextInt((max - min) + 1) + min;
+    }
+
+    private ArrayList<Integer> getRandomNonRepeatingIntegers(int size, int min, int max, List<Integer> except) {
+        ArrayList<Integer> numbers = new ArrayList<Integer>();
+        while (numbers.size() < size) {
+            int random = getRandomInt(min, max);
+            if (except.size() != 0 && except.contains(random)) {
+                continue;
+            }
+            if (!numbers.contains(random)) {
+                numbers.add(random);
+            }
+        }
+        return numbers;
     }
 
     @Override
     public Result getUser() {
         String userName = KblogUtils.getUserName();
         UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userName));
-        UserBaseInfoVo userBaseInfoVo=new UserBaseInfoVo();
-        BeanUtil.copyProperties(userEntity,userBaseInfoVo);
+        UserBaseInfoVo userBaseInfoVo = new UserBaseInfoVo();
+        BeanUtil.copyProperties(userEntity, userBaseInfoVo);
         return Result.success(userBaseInfoVo);
     }
 
-    @Override
-    public Result uploadAvatar(MultipartFile file) throws IOException {
-        if (file.isEmpty()){
-            throw new KBlogException(ResultCode.USER_AVATAR_ERROR);
-        }
-        String fileName=file.getOriginalFilename();
-        String filePath="/userAvatar/";
-        File dest=new File(filePath+fileName);
-        file.transferTo(dest);
-        log.info("头像上传成功");
-        return Result.success();
-    }
 
     @Override
     public Result checkForm(String key, String value) {
-        if (this.checkParam(value,key)){
-            throw new KBlogParamException(ResultCode.PARAM_ONLY_HAS);
+        if (this.checkParam(value, key)) {
+            return Result.error(ResultCode.PARAM_ONLY_HAS);
         }
         return Result.success();
     }
 
     @Override
-    public Result getRecommend(){
-        List<UserRecommendVo> userRecommendVos= userMapper.selectUserRecommend();
-        //获取用户点赞总数
-        for (UserRecommendVo userRecommendVo : userRecommendVos) {
-           int likeNum= articleMapper.selectCountLikeByUId(userRecommendVo.getId());
-           userRecommendVo.setLikeNum(likeNum);
+    public Result userLike(Integer userId, Integer type) {
+        String userName = KblogUtils.getUserName();
+        Integer id = userMapper.getIdByAccount(userName);
+        if (type == 1) {
+            try {
+                int count= userMapper.selectLikeCount(id,userId);
+                if (count==0){
+                    int flag =  userMapper.insertUserLikeRelation(id,userId);
+                }else {
+                    int flag= userMapper.updateUserLikeRelation(id,userId,1);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
+            }
+        } else if (type == 0) {
+            try {
+                userMapper.updateUserLikeRelation(id,userId,0);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
+            }
         }
-        return Result.success(userRecommendVos);
+        return Result.success();
     }
 }
 

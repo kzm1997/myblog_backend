@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.entity.category.CategoryEntity;
 import com.kzm.blog.common.entity.category.bo.CategoryBo;
+import com.kzm.blog.common.entity.category.vo.CategoryMessageVo;
 import com.kzm.blog.common.entity.category.vo.CategoryNameVo;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
 import com.kzm.blog.common.entity.category.vo.CategoryVo;
@@ -97,5 +98,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryEnt
     public Result getHot() {
         List<CategoryNameVo> categoryNameVos = categoryMapper.getHot();
         return Result.success(categoryNameVos);
+    }
+
+    @Override
+    public Result getMessage(Integer id) {
+        CategoryEntity categoryEntity = categoryMapper.selectById(id);
+        CategoryMessageVo categoryMessageVo=new CategoryMessageVo();
+        BeanUtil.copyProperties(categoryEntity,categoryMessageVo);
+        return Result.success(categoryMessageVo);
     }
 }

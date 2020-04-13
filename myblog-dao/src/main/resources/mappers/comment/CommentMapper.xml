@@ -10,4 +10,16 @@
     <update id="likeNumReduce">
         update  comment set  like_num=like_num-1 where id=#{id}
     </update>
+    <delete id="delteArticle">
+        delete  from  comment where  owner_id=#{id}
+    </delete>
+    <delete id="deleteUsrLike">
+        delete  from  comment_user_like
+        <where>
+            comment_id in
+            <foreach collection="collect" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </delete>
 </mapper>

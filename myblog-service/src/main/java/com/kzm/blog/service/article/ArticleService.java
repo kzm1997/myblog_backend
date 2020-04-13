@@ -48,4 +48,11 @@ public interface ArticleService extends IService<ArticleEntity> {
      * @return
      */
     Result getRecommend();
+
+    /**
+     * 文章编辑页获取文章
+     *  @param id
+     * @return
+     */
+    Result getEditArticle(Integer id);
 }

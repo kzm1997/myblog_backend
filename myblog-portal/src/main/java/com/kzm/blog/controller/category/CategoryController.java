@@ -36,42 +36,48 @@ public class CategoryController {
 
     @GetMapping("detail")
     @Log(module = "文章分类", operation = "获取所有文章分类详细")
-    public Result<MyPage<CategoryVo>> listCategoryAll( CategoryBo categoryBo) {
+    public Result<MyPage<CategoryVo>> listCategoryAll(CategoryBo categoryBo) {
         MyPage<CategoryVo> myPage = categoryService.listCategoryById(categoryBo);
         return Result.success(myPage);
     }
 
 
     @GetMapping("getCategoryName")
-    @Log(module = "文章分类",operation = "通过id获取category_name")
-    public Result getCategoryName(@RequestParam() Integer id){
+    @Log(module = "文章分类", operation = "通过id获取category_name")
+    public Result getCategoryName(@RequestParam() Integer id) {
         CategoryEntity byId = categoryService.getById(id);
         return Result.success(new CategoryNameVo().setCategoryName(byId.getCategoryName()));
     }
 
     @GetMapping("/index")
-    @Log(module = "文章分类",operation = "首页文章分类")
-    public Result  getCategory(){
-        return  categoryService.getIndexCategory();
+    @Log(module = "文章分类", operation = "首页文章分类")
+    public Result getCategory() {
+        return categoryService.getIndexCategory();
     }
 
     @GetMapping("/tagByCategory/")
-    @Log(module = "文章分类",operation = "首页分类tag")
-    public Result getTag(@RequestParam("categoryId") Integer id){
-      return categoryService.getTag(id);
+    @Log(module = "文章分类", operation = "首页分类tag")
+    public Result getTag(@RequestParam("categoryId") Integer id) {
+        return categoryService.getTag(id);
     }
 
     @GetMapping("getAllCategory")
-    @Log(module = "文章分类",operation = "获取所有文章分类")
-    public Result getAllCategory(){
+    @Log(module = "文章分类", operation = "获取所有文章分类")
+    public Result getAllCategory() {
         List<CategoryEntity> list = categoryService.list(new QueryWrapper<CategoryEntity>().lambda().eq(CategoryEntity::getParentId, -1));
         return Result.success(list);
     }
 
     @GetMapping("getHot")
-    @Log(module = "文章分类",operation = "获取热门标签")
-    public Result getCategoryHot(){
-        return  categoryService.getHot();
+    @Log(module = "文章分类", operation = "获取热门标签")
+    public Result getCategoryHot() {
+        return categoryService.getHot();
+    }
+
+    @GetMapping("CategoryMessage")
+    @Log(module = "文章分类", operation = "分类信息")
+    public Result getCategoryMessage(@RequestParam("id")Integer id) {
+       return  categoryService.getMessage(id);
     }
 
 

@@ -21,7 +21,7 @@ public class ArticleUploadBo {
 
     private String category;
 
-    private List<Integer>  tags;
+    private List<Integer> tags;
 
     private String content;
 

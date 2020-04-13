@@ -39,4 +39,11 @@ public interface CommentService extends IService<CommentEntity> {
      * @return
      */
     Result like(LikeBo likeBo);
+
+    /**
+     * 删除评论
+     * @param id
+     * @return
+     */
+    Result deleteComments(Integer id);
 }

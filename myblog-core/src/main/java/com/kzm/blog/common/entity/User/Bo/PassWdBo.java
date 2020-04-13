@@ -1,6 +1,7 @@
 package com.kzm.blog.common.entity.User.Bo;
 
 import lombok.Data;
+import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotBlank;
 
@@ -13,12 +14,12 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class PassWdBo {
 
-    @NotBlank
+    @NotBlank(message = "密码不能为空")
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "确定密码不能为空")
     private String confirmWd;
 
-    @NotBlank
+    @NotBlank(message = "新密码不能为空")
     private String newPassWd;
 }

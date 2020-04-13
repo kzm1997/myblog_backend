@@ -15,6 +15,8 @@ import java.time.LocalDate;
 @Accessors(chain = true)
 public class UserBaseInfoVo {
 
+    private Integer id;
+
     private String nickname;
 
     private String avatar;
@@ -34,6 +36,8 @@ public class UserBaseInfoVo {
     private String qq;
 
     private String city;
+
+    private String job;
 
     private String motto;
 

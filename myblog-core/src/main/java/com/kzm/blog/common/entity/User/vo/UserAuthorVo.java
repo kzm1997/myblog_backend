@@ -25,4 +25,6 @@ public class UserAuthorVo {
 
     private String job;
 
+    private Boolean like;
+
 }

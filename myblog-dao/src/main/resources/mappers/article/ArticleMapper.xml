@@ -29,23 +29,64 @@
         id,title,description,author_id,content,content_format,
         read_num,comment_num,like_num,publish,catebgory_id,create_time,update_time </sql>
 
+    <update id="addComments">
+        update article set  comment_num=comment_num+1 where id=#{id}
+    </update>
+
     <select id="selectShortByTag" resultType="com.kzm.blog.common.entity.article.vo.ArticleShortVo">
-         select
-          a.id,
-          a.title,
-          a.description,
-          a.read_num,
-          a.comment_num,
-          a.author_id,
-          a.update_time,
-          u.avatar,
-          u.nickname
-          from  article a inner join sys_user u on a.author_id=u.id
-          inner  join article_category ac on  a.id=ac.article_id
-          where  ac.category_id=#{articleShortBo.id}
+        select
+        distinct a.id,
+        a.title,
+        a.description,
+        a.read_num,
+        a.comment_num,
+        a.author_id,
+        a.update_time,
+        u.avatar,
+        u.nickname
+        from article a inner join sys_user u on a.author_id=u.id
+        inner join article_category ac on a.id=ac.article_id
+        <where>
+            <if test="articleShortBo.id==0">
+
+            </if>
+            <if test="articleShortBo.id!=0 and articleShortBo.id !=-1">
+                ac.category_id=#{articleShortBo.id}
+            </if>
+        </where>
+
     </select>
 
     <select id="selectCountLikeByUId" resultType="java.lang.Integer">
           select sum(like_num) from  article where author_id=#{user_id}
+    </select>
+    <select id="selectCategory" resultType="com.kzm.blog.common.entity.category.vo.CategoryShortVo">
+        select
+      c.id,
+      c.category_name,
+      c.parent_id
+      from  category c inner join article_category  ac on c.id=ac.category_id
+      where  ac.article_id=#{id} and c.parent_id=-1
+    </select>
+    <select id="selectTags" resultType="com.kzm.blog.common.entity.category.vo.CategoryShortVo">
+        select
+      c.id,
+      c.category_name,
+      c.parent_id
+      from  category c inner join article_category  ac on c.id=ac.category_id
+      where  ac.article_id=#{id}  and c.parent_id!=-1
+    </select>
+    <select id="getWordCount" resultType="com.kzm.blog.common.entity.User.vo.UserFerralVo">
+        select
+        author_id as id,
+        sum(length(content)) as TotalWord
+        from article
+        <where>
+            author_id in
+            <foreach collection="ids" open="(" separator="," close=")" index="index" item="item">
+                #{item}
+            </foreach>
+            group by author_id
+        </where>
     </select>
 </mapper>

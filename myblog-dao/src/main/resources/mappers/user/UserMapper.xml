@@ -26,6 +26,15 @@
         id,account,password,avatar,email,sex,person_link,birthday,company,
         school,github,qq,nickname,motto,salt,status
     </sql>
+    <insert id="insertUserLikeRelation" >
+        insert into
+        user_user_like(from_user_id,to_user_id,status,create_time,update_time)
+        values(#{fromId},#{toId},1,now(),now())
+    </insert>
+    <update id="updateUserLikeRelation">
+        update
+        user_user_like set status=#{status} where from_user_id=#{fromId} and to_user_id=#{toId}
+    </update>
     <select id="getIdByAccount" resultType="java.lang.Integer">
         select id from  sys_user where account=#{userName}
     </select>
@@ -37,6 +46,36 @@
       count(sf.id) as  fansNum
       from sys_user su inner join sys_flow  sf on sf.followed_id=su.id  order by fansNum limit 5
          </select>
+    <select id="getFerralUser" resultType="com.kzm.blog.common.entity.User.vo.UserFerralVo">
+        select
+        su.id,
+        su.avatar,
+        su.nickname,
+        count(uul.id) as likeNum
+        from sys_user su left join user_user_like uul on su.id=uul.to_user_id and uul.status=1
+        <where>
+            su.id in
+            <foreach collection="ids" open="(" separator="," close=")" item="item" index="index">
+                #{item}
+            </foreach>
+            group by su.id
+        </where>
+    </select>
+    <select id="selectUnLikeUser" resultType="java.lang.Integer">
+        select
+        to_user_id as id
+        from user_user_like where  to_user_id !=#{userId} and from_user_id=#{userId}  and status=1
+        group by to_user_id
+    </select>
+    <select id="selectLikeCount" resultType="java.lang.Integer">
+      select count(*)
+      from user_user_like where from_user_id=#{fromId} and to_user_id=#{toId}
+    </select>
+    <select id="selectIsLikeCount" resultType="java.lang.Integer">
+        select
+        count(*)
+        from user_user_like where from_user_id=#{fromId} and to_user_id=#{toId} and status=1
+    </select>
 
 
 </mapper>

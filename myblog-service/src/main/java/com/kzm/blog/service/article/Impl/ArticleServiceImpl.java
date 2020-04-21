@@ -20,6 +20,7 @@ import com.kzm.blog.common.entity.category.CategoryEntity;
 import com.kzm.blog.common.entity.category.vo.CategoryNameVo;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
 import com.kzm.blog.common.entity.comment.CommentEntity;
+import com.kzm.blog.common.entity.log.vo.Recent;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.utils.KblogUtils;
 import com.kzm.blog.common.utils.MyPage;
@@ -247,5 +248,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
         return  articleEditVo;
     }
 
-
+    @Override
+    public List<Recent> getRecentArticle() {
+        return articleMapper.getRecentArticle();
+    }
 }

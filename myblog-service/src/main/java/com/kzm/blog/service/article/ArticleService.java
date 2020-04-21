@@ -5,11 +5,15 @@ import com.kzm.blog.common.Result;
 import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.article.bo.ArticleShortBo;
 import com.kzm.blog.common.entity.article.bo.ArticleUploadBo;
+import com.kzm.blog.common.entity.log.vo.Recent;
+
+import java.util.List;
 
 public interface ArticleService extends IService<ArticleEntity> {
 
     /**
      * 通过分离id获取文章 0代表全部文章,-1代表热点文章
+     *
      * @param articleShortBo
      * @return
      */
@@ -17,6 +21,7 @@ public interface ArticleService extends IService<ArticleEntity> {
 
     /**
      * 根据id获取文章简介展示页
+     *
      * @param id
      * @return
      */
@@ -24,6 +29,7 @@ public interface ArticleService extends IService<ArticleEntity> {
 
     /**
      * 删除文章
+     *
      * @param id
      * @return
      */
@@ -31,6 +37,7 @@ public interface ArticleService extends IService<ArticleEntity> {
 
     /**
      * 发布文章
+     *
      * @param articleUploadBo
      * @return
      */
@@ -38,6 +45,7 @@ public interface ArticleService extends IService<ArticleEntity> {
 
     /**
      * 更新文章
+     *
      * @param articleUploadBo
      * @return
      */
@@ -45,14 +53,23 @@ public interface ArticleService extends IService<ArticleEntity> {
 
     /**
      * 获取推介文章
+     *
      * @return
      */
     Result getRecommend();
 
     /**
      * 文章编辑页获取文章
-     *  @param id
+     *
+     * @param id
      * @return
      */
     Result getEditArticle(Integer id);
+
+    /**
+     * 获取近日文章数
+     *
+     * @return
+     */
+    List<Recent> getRecentArticle();
 }

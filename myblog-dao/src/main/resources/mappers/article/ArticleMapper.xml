@@ -32,6 +32,9 @@
     <update id="addComments">
         update article set  comment_num=comment_num+1 where id=#{id}
     </update>
+    <update id="updateReadNum">
+        update article set  read_num=read_num+1 where id=#{id}
+    </update>
 
     <select id="selectShortByTag" resultType="com.kzm.blog.common.entity.article.vo.ArticleShortVo">
         select
@@ -88,5 +91,19 @@
             </foreach>
             group by author_id
         </where>
+    </select>
+    <select id="getRecentArticle" resultType="com.kzm.blog.common.entity.log.vo.Recent">
+     select
+      date_format(l.update_time, '%m-%d') days,
+      count(1) as count
+      from
+      (select
+      *
+      from
+      article
+      where
+      date_sub(curdate(), interval 7 day) &lt;= date(update_time)
+      ) as l
+      group by days
     </select>
 </mapper>

@@ -34,8 +34,12 @@ public class CategoryController {
     @Autowired
     ArticleService articleService;
 
+    /**
+     * 文章分类详细
+     * @param categoryBo
+     * @return
+     */
     @GetMapping("detail")
-    @Log(module = "文章分类", operation = "获取所有文章分类详细")
     public Result<MyPage<CategoryVo>> listCategoryAll(CategoryBo categoryBo) {
         MyPage<CategoryVo> myPage = categoryService.listCategoryById(categoryBo);
         return Result.success(myPage);
@@ -43,39 +47,55 @@ public class CategoryController {
 
 
     @GetMapping("getCategoryName")
-    @Log(module = "文章分类", operation = "通过id获取category_name")
     public Result getCategoryName(@RequestParam() Integer id) {
         CategoryEntity byId = categoryService.getById(id);
         return Result.success(new CategoryNameVo().setCategoryName(byId.getCategoryName()));
     }
 
+    /**
+     * 首页文章分类
+     * @return
+     */
     @GetMapping("/index")
-    @Log(module = "文章分类", operation = "首页文章分类")
     public Result getCategory() {
         return categoryService.getIndexCategory();
     }
 
+    /**
+     * 首页分类tag
+     * @param id
+     * @return
+     */
     @GetMapping("/tagByCategory/")
-    @Log(module = "文章分类", operation = "首页分类tag")
     public Result getTag(@RequestParam("categoryId") Integer id) {
         return categoryService.getTag(id);
     }
 
+    /**
+     * 获取所有文章分类
+     * @return
+     */
     @GetMapping("getAllCategory")
-    @Log(module = "文章分类", operation = "获取所有文章分类")
     public Result getAllCategory() {
         List<CategoryEntity> list = categoryService.list(new QueryWrapper<CategoryEntity>().lambda().eq(CategoryEntity::getParentId, -1));
         return Result.success(list);
     }
 
+    /**
+     * 获取热门标签
+     * @return
+     */
     @GetMapping("getHot")
-    @Log(module = "文章分类", operation = "获取热门标签")
     public Result getCategoryHot() {
         return categoryService.getHot();
     }
 
+    /**
+     * 获取分类信息
+     * @param id
+     * @return
+     */
     @GetMapping("CategoryMessage")
-    @Log(module = "文章分类", operation = "分类信息")
     public Result getCategoryMessage(@RequestParam("id")Integer id) {
        return  categoryService.getMessage(id);
     }

@@ -4,24 +4,22 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kzm.blog.common.base.BaseEntity;
 import com.kzm.blog.common.constant.ResultCode;
+import com.kzm.blog.common.entity.User.ActiveUser;
 import com.kzm.blog.common.entity.User.Bo.*;
 import com.kzm.blog.common.entity.User.vo.*;
-import com.kzm.blog.common.entity.article.ArticleEntity;
-import com.kzm.blog.common.utils.JWTToken;
+import com.kzm.blog.common.utils.*;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.constants.Base;
 import com.kzm.blog.common.entity.User.UserEntity;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.exception.RedisException;
 import com.kzm.blog.common.properties.KBlogProperties;
-import com.kzm.blog.common.utils.JWTUtil;
-import com.kzm.blog.common.utils.KblogUtils;
-import com.kzm.blog.common.utils.PasswordHelper;
-import com.kzm.blog.common.utils.TimeUtils;
 import com.kzm.blog.mapper.article.ArticleMapper;
 import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.cache.CacheService;
@@ -33,10 +31,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +60,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Autowired
     private KBlogProperties blogProperties;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private RedisService redisService;
@@ -88,11 +91,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         } catch (Exception e) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
-        //todo 用户的默认角色和权限配置
-        this.loadUserToRedis(userEntity);
+
     }
 
     /**
+     * 待考量
      * 将用户相关信息保存到Redis中
      *
      * @param userEntity
@@ -102,7 +105,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     }
 
     @Override
-    public Result login(UserLoginBo userLoginBo) throws KBlogException, RedisException {
+    public Result login(UserLoginBo userLoginBo) throws KBlogException, RedisException, JsonProcessingException {
         UserEntity userEntity = new UserEntity();
         UserEntity entity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userLoginBo.getAccount()));
         if (entity == null) {
@@ -118,7 +121,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         if (Base.user.STATUS_LOCK.equals(entity.getStatus())) {
             throw new KBlogException(ResultCode.USER_ACCOUNT_FORBIDDEN);
         }
-        //todo  更新用户登录时间
         //生成token,用户密码做token签名密钥,DES加密采用redis前缀
         String token = KblogUtils.encryptToken(JWTUtil.sign(entity.getAccount(), entity.getPassword()));
         LocalDateTime expireTime = LocalDateTime.now().plusSeconds(blogProperties.getJwtTimeOut());
@@ -126,18 +128,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         JWTToken jwtToken = new JWTToken(token, expireTimeStr);
 
         //将token存到redis中
-        this.saveTokenToRedis(entity, jwtToken);
-        //返回用户数据 //todo 待封装
-        UserInfoVo userInfoVo = new UserInfoVo();
-        UserEntityVo userEntityVo = new UserEntityVo();
-        BeanUtils.copyProperties(entity, userEntityVo);
-        userInfoVo.setUserEntityVo(userEntityVo);
-        userInfoVo.setToken(jwtToken.getToken());
-        return Result.success(userInfoVo);
+        this.saveTokenToRedis(userEntity, jwtToken);
+        //返回token
+        Set<String> roles = userMapper.getUserRoles(entity.getId());
+        if (roles.size() > 0) {
+            //封装用户权限信息
+            UserBackInfoVo userBackInfoVo = new UserBackInfoVo();
+            UserInfoVo userInfoVo = new UserInfoVo();
+            UserEntityVo userEntityVo = new UserEntityVo();
+            BeanUtils.copyProperties(entity, userEntityVo);
+            userInfoVo.setToken(jwtToken.getToken());
+            userInfoVo.setExpireTime(jwtToken.getExipreAt());
+            userInfoVo.setUserEntityVo(userEntityVo);
+            userBackInfoVo.setUserInfoVo(userInfoVo);
+            Set<String> permissions = userMapper.getUserPermissions(entity.getId());
+            userBackInfoVo.setPermissions(permissions);
+            userBackInfoVo.setRoles(roles);
+            return Result.success(userBackInfoVo);
+        } else {
+            UserInfoVo userInfoVo = new UserInfoVo();
+            userInfoVo.setExpireTime(jwtToken.getExipreAt());
+            userInfoVo.setToken(jwtToken.getToken());
+            return Result.success(userInfoVo);
+        }
     }
 
-    private String saveTokenToRedis(UserEntity userEntity, JWTToken jwtToken) throws RedisException {
-        return redisService.set(Base.TOKEN_CACHE_PREFIX + StringPool.DOT + jwtToken.getToken(), jwtToken.getToken(), blogProperties.getJwtTimeOut() * 1000);
+    private String saveTokenToRedis(UserEntity userEntity, JWTToken jwtToken) throws RedisException, JsonProcessingException {
+        HttpServletRequest httpServeltRequest = HttpContextUtils.getHttpServeltRequest();
+        String ip = IPUtils.getIpaddr(httpServeltRequest);
+        //构建在线用户
+        ActiveUser activeUser = new ActiveUser();
+        activeUser.setAccount(userEntity.getAccount());
+        activeUser.setId(ip);
+        activeUser.setToken(jwtToken.getToken());
+        activeUser.setLoginAddress(AddressUtil.getCityInfo(ip));
+        //zset存储d登录用户,score为过期时间戳
+        redisService.zadd(Base.cache.ACTIVE_USERS_ZSET_PREFIX, Double.valueOf(jwtToken.getExipreAt())
+                , objectMapper.writeValueAsString(activeUser));
+        //将token存到redis
+        redisService.set(Base.TOKEN_CACHE_PREFIX + StringPool.DOT + jwtToken.getToken(),
+                jwtToken.getToken(), blogProperties.getJwtTimeOut() * 1000);
+        return activeUser.getId();
     }
 
     @Override
@@ -160,7 +191,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
                     return true;
                 }
             }
-
         }
         return false;
     }
@@ -301,11 +331,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         Integer id = userMapper.getIdByAccount(userName);
         if (type == 1) {
             try {
-                int count= userMapper.selectLikeCount(id,userId);
-                if (count==0){
-                    int flag =  userMapper.insertUserLikeRelation(id,userId);
-                }else {
-                    int flag= userMapper.updateUserLikeRelation(id,userId,1);
+                int count = userMapper.selectLikeCount(id, userId);
+                if (count == 0) {
+                    int flag = userMapper.insertUserLikeRelation(id, userId);
+                } else {
+                    int flag = userMapper.updateUserLikeRelation(id, userId, 1);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -313,7 +343,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             }
         } else if (type == 0) {
             try {
-                userMapper.updateUserLikeRelation(id,userId,0);
+                userMapper.updateUserLikeRelation(id, userId, 0);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new KBlogException(ResultCode.DATA_UPDATE_ERR);
@@ -321,5 +351,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         }
         return Result.success();
     }
+
+    @Override
+    public Set<String> getUserRoles(String account) {
+
+        return null;
+    }
+
+    @Override
+    public Result getAllUser(UserBo userBo) {
+        Page<UserListVo> page = new Page<>(userBo.getPageNum(), userBo.getPageSize());
+        page = (Page<UserListVo>) userMapper.getAllUser(page, userBo);
+        List<UserListVo> records = page.getRecords();
+        for (UserListVo record : records) {
+            int artcileCount = userMapper.getArtcileCount(record.getId());
+            record.setArticles(artcileCount);
+        }
+        page.setRecords(records);
+        MyPage<UserListVo> myPage=new MyPage<UserListVo>().getMyPage(page);
+        return Result.success(myPage);
+    }
+
 }
 

@@ -3,7 +3,6 @@ package com.kzm.blog.controller.upload;
 import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.kzm.blog.common.Result;
-import com.kzm.blog.common.annotation.Log;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.UserEntity;
 import com.kzm.blog.common.utils.KblogUtils;
@@ -40,7 +39,6 @@ public class UploadController {
     private UserMapper userMapper;
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
-    @Log(module = "文件上传", operation = "文件上传")
     public Result upload(HttpServletRequest request, @RequestPart("file") MultipartFile file, @RequestParam("type") String type) {
         YearMonth now = YearMonth.now();
         String timePath = TimeUtils.YearMonthToString(now, "yyyyMM");

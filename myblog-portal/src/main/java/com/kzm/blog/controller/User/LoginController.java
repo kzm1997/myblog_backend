@@ -1,20 +1,18 @@
 package com.kzm.blog.controller.User;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.annotation.Log;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.Bo.UserLoginBo;
 import com.kzm.blog.common.entity.User.Bo.UserRegisterBo;
-
+import com.kzm.blog.common.entity.log.LoginLog;
 import com.kzm.blog.common.exception.KBlogException;
+import com.kzm.blog.service.log.LoginLogService;
 import com.kzm.blog.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.constraints.NotBlank;
 
 
@@ -31,6 +29,9 @@ public class LoginController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private LoginLogService loginLogService;
+
 
     @PostMapping("register")
     @Log(module = "注册", operation = "注册")
@@ -39,8 +40,15 @@ public class LoginController {
     }
 
     @PostMapping("/login")
+    @Log(module = "前台登录", operation = "登录")
     public Result login(@RequestBody UserLoginBo userLoginBo) throws Exception {
-        return userService.login(userLoginBo);
+        Result result = userService.login(userLoginBo);
+        if (result!=null && result.isSuccess()) {
+            LoginLog loginLog = new LoginLog();
+            loginLog.setAccount(userLoginBo.getAccount());
+            loginLogService.saveLoginLog(loginLog);
+        }
+        return result;
     }
 
     @GetMapping("/logout")

@@ -36,16 +36,15 @@ public class CommentController {
     }
 
     @GetMapping("getAllComment")
-    @Log(module = "评论模块", operation = "获取文章下所有评论")
     public Result getAllComments(@RequestParam("id") Integer id) {
         return Result.success(commentService.selectAllComment(id));
     }
 
     @GetMapping("deleteComment")
-    @Log(module = "评论模块", operation = "删除评论")
     public Result deleteComment(@RequestParam("id")Integer id) {
         return  commentService.deleteComments(id);
     }
+
     @PostMapping("postSonComment")
     @Log(module = "评论模块",operation = "回复子评论")
     public Result postSonComment(@RequestBody CommentSonBo commentSonBo){
@@ -53,11 +52,11 @@ public class CommentController {
     }
 
     @GetMapping("/getCount")
-    @Log(module = "评论模块",operation = "获取评论总数")
     public Result getCount(@RequestParam("id") Integer id){
         ArticleEntity id1 = articleService.getById(id);
         return Result.success(id1.getCommentNum());
     }
+
 
     @PostMapping("/like")
     @Log(module = "评论模块",operation = "点赞")

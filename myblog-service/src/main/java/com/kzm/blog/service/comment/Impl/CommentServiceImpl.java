@@ -4,7 +4,6 @@ package com.kzm.blog.service.comment.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kzm.blog.common.Result;
-import com.kzm.blog.common.annotation.Log;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.UserEntity;
 import com.kzm.blog.common.entity.article.ArticleEntity;

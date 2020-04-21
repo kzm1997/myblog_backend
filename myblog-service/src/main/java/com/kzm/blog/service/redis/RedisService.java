@@ -38,7 +38,14 @@ public interface RedisService {
    String set(String key,String value)throws RedisException;
 
 
-
+    /**
+     * set命令
+     * @param key
+     * @param value
+     * @param milliscends
+     * @return
+     * @throws RedisException
+     */
    String set(String key,String value,Long milliscends)throws RedisException;
 
     /**
@@ -49,4 +56,17 @@ public interface RedisService {
      * @throws RedisException
      */
   Long pexpire(String key,Long milliscends)throws RedisException;
+
+
+    /**
+     * zadd命令
+     * @param key
+     * @param score
+     * @param member
+     * @return
+     * @throws RedisException
+     */
+  Long zadd(String key,Double score,String member)throws RedisException;
+
+
 }

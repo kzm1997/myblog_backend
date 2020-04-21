@@ -26,7 +26,7 @@
         id,account,password,avatar,email,sex,person_link,birthday,company,
         school,github,qq,nickname,motto,salt,status
     </sql>
-    <insert id="insertUserLikeRelation" >
+    <insert id="insertUserLikeRelation">
         insert into
         user_user_like(from_user_id,to_user_id,status,create_time,update_time)
         values(#{fromId},#{toId},1,now(),now())
@@ -75,6 +75,50 @@
         select
         count(*)
         from user_user_like where from_user_id=#{fromId} and to_user_id=#{toId} and status=1
+    </select>
+    <select id="getUserRoles" resultType="java.lang.String">
+       select
+       r.role_name
+       from
+       user_role ur inner join role r on  ur.role_id=r.role_id where ur.user_id=#{userId}
+    </select>
+
+    <select id="getUserPermissions" resultType="java.lang.String">
+     SELECT
+	 DISTINCT m.perms
+     FROM
+     sys_user u left JOIN  user_role ur
+	 ON u.id=ur.user_id LEFT JOIN role_menu rm
+	 ON ur.role_id=rm.role_id LEFT JOIN menu  m ON
+	 rm.menu_id=m.menu_id
+     WHERE
+	 ur.user_id =#{userId}
+	 AND m.PERMS IS NOT null
+    </select>
+
+    <select id="getAllUser" resultType="com.kzm.blog.common.entity.User.vo.UserListVo">
+      select
+      id,
+      nickname,
+      email,
+      avatar,
+      status,
+      create_time
+      from  sys_user
+      <where>
+          <if test="userBo.nickname !=null and userBo.nickname!=''">
+              nickname like concat('%',#{userBo.nickname},'%')
+          </if>
+          <if test="userBo.status !=null">
+              and status=#{userBo.status}
+          </if>
+      </where>
+    </select>
+    <select id="getArtcileCount" resultType="java.lang.Integer">
+        select
+        count(1)
+        from  sys_user  su inner join article a on  su.id=a.author_id
+        where su.id=#{id}
     </select>
 
 

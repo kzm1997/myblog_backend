@@ -10,6 +10,8 @@ import com.kzm.blog.common.exception.RedisException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 
 
 public interface UserService extends IService<UserEntity> {
@@ -30,7 +32,7 @@ public interface UserService extends IService<UserEntity> {
      * @throws KBlogException
      * @throws RedisException
      */
-    Result login(UserLoginBo userLoginBo) throws KBlogException, RedisException;
+    Result login(UserLoginBo userLoginBo) throws KBlogException, RedisException, JsonProcessingException;
 
     /**
      * 表单参数唯一性检查
@@ -99,4 +101,18 @@ public interface UserService extends IService<UserEntity> {
      * @return
      */
     Result userLike(Integer userId, Integer type);
+
+    /**
+     * 获取用户的角色列表
+     * @param account
+     */
+    Set<String> getUserRoles(String account);
+
+
+    /**
+     * 后台获取前台所有用户
+     * @param userBo
+     * @return
+     */
+    Result getAllUser(UserBo userBo);
 }

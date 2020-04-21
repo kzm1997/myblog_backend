@@ -1,14 +1,20 @@
 package com.kzm.blog.mapper.user;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import com.kzm.blog.common.entity.User.Bo.UserBo;
 import com.kzm.blog.common.entity.User.UserEntity;
 import com.kzm.blog.common.entity.User.vo.UserFerralVo;
+import com.kzm.blog.common.entity.User.vo.UserListVo;
 import com.kzm.blog.common.entity.User.vo.UserRecommendVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Mapper
 public interface UserMapper extends BaseMapper<UserEntity> {
@@ -58,4 +64,22 @@ public interface UserMapper extends BaseMapper<UserEntity> {
      * @return
      */
     int selectIsLikeCount(@Param("fromId") Integer id, @Param("toId") Integer userId);
+
+    /**
+     * 查询用户的角色信息
+     * @param id
+     * @return
+     */
+    Set<String> getUserRoles(@Param("userId") Integer id);
+
+    /**
+     * 查询用户的权限信息
+     * @param id
+     * @return
+     */
+    Set<String> getUserPermissions(@Param("userId") Integer id);
+
+    IPage<UserListVo> getAllUser(@Param("page")Page<UserListVo> page, @Param("userBo") UserBo userBo);
+
+    int getArtcileCount(@Param("id") Integer id);
 }

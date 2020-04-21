@@ -16,5 +16,7 @@ public class UserInfoVo {
 
     private String token;
 
+    private String expireTime;
+
     private UserEntityVo userEntityVo;
 }

@@ -36,13 +36,11 @@ public class UserController {
 
 
     @PostMapping("/edit")
-    @Log(module = "用户模块", operation = "更新资料")
     public Result edit(@RequestBody UserMaterialBo userMaterialBo) {
         return userService.updateUserMaterial(userMaterialBo);
     }
 
     @PostMapping("/exMaterial")
-    @Log(module = "用户模块", operation = "更新扩展资料")
     public Result editMaterial(@RequestBody ExMaterialBo exMaterialBo) {
         return userService.updateExMaterial(exMaterialBo);
     }
@@ -54,19 +52,22 @@ public class UserController {
     }
 
     @GetMapping("/referral")
-    @Log(module = "用户模块", operation = "推荐作者")
     public Result referralUser() {
         return userService.getFerralUser();
     }
 
     @GetMapping("/getUser")
-    @Log(module = "用户模块", operation = "获取用户数据")
     public Result getUser() {
         return userService.getUser();
     }
 
+    /**
+     *用户信息唯一性校验
+     * @param key
+     * @param value
+     * @return
+     */
     @GetMapping("/checkForm")
-    @Log(module = "用户模块",operation = "用户信息唯一性校验")
     public Result checkForm(@RequestParam String key,@RequestParam String value){
         return  userService.checkForm(key,value);
     }

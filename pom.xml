@@ -20,6 +20,8 @@
         <module>myblog-portal</module>
         <module>myblog-dao</module>
         <module>myblog-service</module>
+        <module>myblog-manage</module>
+        <module>myblog-search</module>
     </modules>
 
     <properties>
@@ -115,8 +117,31 @@
                 <artifactId>hutool-all</artifactId>
                 <version>4.5.7</version>
             </dependency>
+            <dependency>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>ip2region</artifactId>
+                <version>1.7.2</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.6</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!--添加SpringBoot插件:tomcat-->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 
 </project>

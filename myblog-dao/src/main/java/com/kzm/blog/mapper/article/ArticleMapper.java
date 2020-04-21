@@ -8,6 +8,7 @@ import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.article.bo.ArticleShortBo;
 import com.kzm.blog.common.entity.article.vo.ArticleShortVo;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
+import com.kzm.blog.common.entity.log.vo.Recent;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -27,4 +28,9 @@ public interface ArticleMapper extends BaseMapper<ArticleEntity> {
     List<CategoryShortVo> selectTags(@Param("id") Integer id);
 
     List<UserFerralVo> getWordCount(@Param("ids")List<Integer> collect);
+
+
+    int updateReadNum(@Param("id") String id);
+
+    List<Recent> getRecentArticle();
 }

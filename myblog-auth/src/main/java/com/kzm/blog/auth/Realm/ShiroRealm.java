@@ -8,14 +8,15 @@ import com.kzm.blog.common.constants.Base;
 import com.kzm.blog.common.exception.RedisException;
 import com.kzm.blog.common.utils.JWTUtil;
 import com.kzm.blog.common.utils.KblogUtils;
-import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.redis.RedisService;
+import com.kzm.blog.service.user.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,9 @@ public class ShiroRealm extends AuthorizingRealm {
     @Autowired
     private RedisService redisService;
 
+
     @Autowired
-    private UserMapper userMapper;
+    private UserService userService;
 
 
     @Override
@@ -42,7 +44,11 @@ public class ShiroRealm extends AuthorizingRealm {
 
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
-        return null;
+        String account = JWTUtil.getAccount(principalCollection.toString());
+        SimpleAuthorizationInfo simpleAuthorizationInfo=new SimpleAuthorizationInfo();
+
+        userService.getUserRoles(account);
+        return simpleAuthorizationInfo;
     }
 
     /**
@@ -74,7 +80,7 @@ public class ShiroRealm extends AuthorizingRealm {
         if (StringUtils.isBlank(account)){
             throw new AuthenticationException("token校验不通过");
         }
-        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, account));
+        UserEntity userEntity = userService.getOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, account));
         if (userEntity==null){
             throw new AuthenticationException("token校验不通过");
         }

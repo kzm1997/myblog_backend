@@ -60,12 +60,11 @@ public class GlobalExceptionHandler {
     }
 
 
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result validExceptionHandler(MethodArgumentNotValidException e) {
         List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
-        return Result.error(1,  fieldErrors.get(0).getDefaultMessage());
+        return Result.error(1, fieldErrors.get(0).getDefaultMessage());
 
     }
 

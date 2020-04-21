@@ -8,16 +8,14 @@
         <result property="ip" column="ip"></result>
         <result property="method" column="method"></result>
         <result property="aimModule" column="aim_module"></result>
-        <result property="nickname" column="nickname"></result>
         <result property="operation" column="operation"></result>
-        <result property="params" column="time"></result>
         <result property="costTime" column="cost_time"></result>
-        <result property="userId" column="user_id"></result>
+        <result property="account" column="account"></result>
         <result property="createTime" column="create_time"></result>
         <result property="updateTime" column="update_time"></result>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,ip,method,aim_module,nickname,operation,cost_time,userid,careate_time,update_time
+        id,ip,method,aim_module,operation,cost_time,account,careate_time,update_time
     </sql>
 </mapper>

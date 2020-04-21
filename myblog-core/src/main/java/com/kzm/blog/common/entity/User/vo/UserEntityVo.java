@@ -1,5 +1,6 @@
 package com.kzm.blog.common.entity.User.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -31,6 +32,8 @@ public class UserEntityVo {
 
     private String school;
 
+    private String job;
+
     private String github;
 
     private String qq;
@@ -42,4 +45,5 @@ public class UserEntityVo {
     private String salt;
 
     private Integer status;
+
 }

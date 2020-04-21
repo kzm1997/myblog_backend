@@ -65,4 +65,9 @@ public class RedisServiceImpl implements RedisService {
     public Long pexpire(String key, Long milliscends) throws RedisException {
         return this.excuteByJedis(j -> j.pexpire(key, milliscends));
     }
+
+    @Override
+    public Long zadd(String key, Double score, String member) throws RedisException {
+        return this.excuteByJedis(j->j.zadd(key,score,member));
+    }
 }

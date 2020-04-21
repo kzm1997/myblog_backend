@@ -13,6 +13,12 @@ public class Base {
     //token缓冲前缀
     public static final String TOKEN_CACHE_PREFIX = "kblog.cache.token";
 
+
+
+
+
+
+
     public interface user {
         /**
          * 用户状态
@@ -36,5 +42,8 @@ public class Base {
     public interface cache{
         //user缓存前缀
         String User_CACHE_PREFIX="kBlog.user.";
+
+        //在线用户的zset前缀
+        String ACTIVE_USERS_ZSET_PREFIX="Kblog.user.active";
     }
 }

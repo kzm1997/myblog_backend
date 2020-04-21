@@ -5,11 +5,16 @@ import com.kzm.blog.common.entity.log.LogEntity;
 import com.kzm.blog.common.utils.HttpContextUtils;
 import com.kzm.blog.common.utils.IPUtils;
 import com.kzm.blog.common.utils.JsonUtils;
+import com.kzm.blog.common.utils.KblogUtils;
+import com.kzm.blog.mapper.article.ArticleMapper;
+import com.kzm.blog.mapper.log.LogMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +32,11 @@ import java.time.LocalDateTime;
 @Slf4j
 public class LogAspect {
 
+    @Autowired
+    private ArticleMapper articleMapper;
+
+    @Autowired
+    private LogMapper logMapper;
 
 
     @Pointcut("@annotation(com.kzm.blog.common.annotation.Log)")
@@ -34,17 +44,18 @@ public class LogAspect {
 
     }
 
+    @Around("logPointCut()")
     public Object around(ProceedingJoinPoint point) throws Throwable {
         long start = System.currentTimeMillis();
         //执行目标方法
         Object o = point.proceed();
         long time = System.currentTimeMillis() - start;
         //保存
-
+        this.saveLog(point, time);
         return o;
     }
 
-    private void saveLogLike(ProceedingJoinPoint point, long time) {
+    private void saveLog(ProceedingJoinPoint point, long time) {
         MethodSignature signature = (MethodSignature) point.getSignature();
         Method method = signature.getMethod();
 
@@ -59,18 +70,22 @@ public class LogAspect {
         String methodName = method.getName();
         log.setMethod(className + "." + methodName + "()");
 
-        //获取请求的参数
-        Object[] args = point.getArgs();
-        String id = JsonUtils.toJson(args[0]);
+        //获取请求的参数并增加文章阅读数
+        if (log.getOperation().trim().equals("获取文章内容")) {
+            Object[] args = point.getArgs();
+            String id = JsonUtils.toJson(args[0]);
+            articleMapper.updateReadNum(id);
+        }
 
-        log.setParams(id);
         //获取request;
-        HttpServletRequest request=HttpContextUtils.getHttpServeltRequest();
+        HttpServletRequest request = HttpContextUtils.getHttpServeltRequest();
         //获取ip地址
+
         log.setIp(IPUtils.getIpaddr(request));
         log.setCostTime(time);
         log.setCreateTime(LocalDateTime.now());
-
-
+        String userName = KblogUtils.getUserName();
+        log.setAccount(userName);
+        logMapper.insert(log);
     }
 }

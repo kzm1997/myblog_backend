@@ -22,7 +22,6 @@ public class ArticleController {
     private ArticleService articleService;
 
     @GetMapping("/getArticles")
-    @Log(module = "文章模块", operation = "获取指定分类下的文章")
     public Result getArticles(ArticleShortBo articleShortBo) {
         return articleService.getArticleByCategory(articleShortBo);
     }
@@ -45,20 +44,27 @@ public class ArticleController {
         return articleService.updateArticle(articleUploadBo);
     }
 
+    /**
+     * 删除文章
+     * @param id
+     * @return
+     */
     @GetMapping("/delte/{id}")
-    @Log(module = "文章模块", operation = "删除文章")
     public Result delteArtice(@PathVariable("id") Integer id) {
         return articleService.delteArticle(id);
     }
 
     @GetMapping("getRecommend")
-    @Log(module = "文章模块", operation = "获取推荐文章")
     public Result getRecommend() {
         return articleService.getRecommend();
     }
 
+    /**
+     * 获取修改文章
+     * @param id
+     * @return
+     */
     @GetMapping("getEditArticle")
-    @Log(module = "文章模块", operation = "获取修改文章")
     public Result getEditArticle(@RequestParam("id") Integer id) {
         return articleService.getEditArticle(id);
     }

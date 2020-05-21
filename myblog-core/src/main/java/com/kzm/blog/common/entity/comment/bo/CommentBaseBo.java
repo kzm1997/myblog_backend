@@ -1,5 +1,6 @@
 package com.kzm.blog.common.entity.comment.bo;
 
+import com.kzm.blog.common.base.PageBo;
 import lombok.Data;
 
 /**
@@ -9,7 +10,7 @@ import lombok.Data;
  * @Version
  */
 @Data
-public class CommentBaseBo {
+public class CommentBaseBo extends PageBo {
 
     private Integer id; //文章id
 

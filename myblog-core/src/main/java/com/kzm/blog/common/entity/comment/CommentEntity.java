@@ -20,11 +20,11 @@ import java.time.LocalDateTime;
 @Data
 @TableName("comment")
 @Accessors(chain = true)
-public class CommentEntity  implements Serializable {
+public class CommentEntity implements Serializable {
 
 
     @ApiModelProperty(value = "主键")
-    @TableId(value = "id",type=IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
 
@@ -36,8 +36,7 @@ public class CommentEntity  implements Serializable {
 
     private String content;
 
-    @TableField("to_id")
-    private Integer told; //被评论者id
+    private Integer toId; //被评论者id
 
     private Integer parentId;  //父评论id
 

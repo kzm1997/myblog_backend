@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.entity.comment.CommentEntity;
 import com.kzm.blog.common.entity.comment.bo.CommentBaseBo;
+import com.kzm.blog.common.entity.comment.bo.CommentListBo;
 import com.kzm.blog.common.entity.comment.bo.CommentSonBo;
 import com.kzm.blog.common.entity.comment.bo.LikeBo;
 import com.kzm.blog.common.entity.comment.vo.CommentVo;
@@ -21,10 +22,10 @@ public interface CommentService extends IService<CommentEntity> {
 
     /**
      * 得到文章所有评论
-     * @param id
+     * @param commentListBo
      * @return
      */
-    List<CommentVo> selectAllComment(Integer id);
+    Result selectAllComment(CommentListBo commentListBo);
 
     /**
      * 回复子评论
@@ -46,4 +47,10 @@ public interface CommentService extends IService<CommentEntity> {
      * @return
      */
     Result deleteComments(Integer id);
+
+    /**
+     * 获取评论折线图
+     * @return
+     */
+    Result getommentLine();
 }

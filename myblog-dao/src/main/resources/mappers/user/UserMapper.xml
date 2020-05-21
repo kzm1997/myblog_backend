@@ -31,15 +31,25 @@
         user_user_like(from_user_id,to_user_id,status,create_time,update_time)
         values(#{fromId},#{toId},1,now(),now())
     </insert>
+    <insert id="addBackUserRole">
+        insert into
+        user_role(user_id,role_id)
+        values(#{userId},#{roleId})
+    </insert>
     <update id="updateUserLikeRelation">
         update
         user_user_like set status=#{status} where from_user_id=#{fromId} and to_user_id=#{toId}
+    </update>
+    <update id="updateUserRole">
+        update user_role
+        set role_id=#{roleId}
+        where user_id=#{userId}
     </update>
     <select id="getIdByAccount" resultType="java.lang.Integer">
         select id from  sys_user where account=#{userName}
     </select>
     <select id="selectUserRecommend" resultType="com.kzm.blog.common.entity.User.vo.UserRecommendVo">
-             select
+     select
         su.id,
        su.nickname  as  nickName,
        su.avatar,
@@ -97,28 +107,96 @@
     </select>
 
     <select id="getAllUser" resultType="com.kzm.blog.common.entity.User.vo.UserListVo">
-      select
-      id,
-      nickname,
-      email,
-      avatar,
-      status,
-      create_time
-      from  sys_user
-      <where>
-          <if test="userBo.nickname !=null and userBo.nickname!=''">
-              nickname like concat('%',#{userBo.nickname},'%')
-          </if>
-          <if test="userBo.status !=null">
-              and status=#{userBo.status}
-          </if>
-      </where>
+        select
+        id,
+        nickname,
+        email,
+        avatar,
+        status,
+        create_time
+        from sys_user
+        <where>
+            <if test="userBo.nickname !=null and userBo.nickname!=''">
+                nickname like concat('%',#{userBo.nickname},'%')
+            </if>
+            <if test="userBo.status !=null">
+                and status=#{userBo.status}
+            </if>
+        </where>
     </select>
     <select id="getArtcileCount" resultType="java.lang.Integer">
         select
         count(1)
         from  sys_user  su inner join article a on  su.id=a.author_id
         where su.id=#{id}
+    </select>
+    <select id="getAllBackUser" resultType="com.kzm.blog.common.entity.User.vo.UserListVo">
+        select
+        u.id,
+        u.nickname,
+        u.email,
+        u.avatar,
+        u.status,
+        r.role_name as roleName,
+        u.create_time
+        from sys_user u left join user_role ur on u.id=ur.user_id inner join role r on ur.role_id=r.role_id
+        <where>
+            ur.role_id is not null
+            <if test="userBo.nickname !=null and userBo.nickname!=''">
+                and nickname like concat('%',#{userBo.nickname},'%')
+            </if>
+            <if test="userBo.status !=null">
+                and status=#{userBo.status}
+            </if>
+        </where>
+    </select>
+    <select id="getArticleRecent" resultType="com.kzm.blog.common.entity.article.vo.ArticleRecentVo">
+        select
+       id,
+       title,
+       description as summary,
+       read_num,
+       comment_num,
+       update_time
+       from  article
+       where  author_id=#{id} and
+        date_sub(curdate(),interval 30 day) &lt;= date(update_time)
+        order by  update_time desc
+    </select>
+    <select id="selectUserLike" resultType="com.kzm.blog.common.entity.User.vo.UserLikeVo">
+        select
+        uul.id,
+        su.avatar,
+        su.nickname,
+        su.motto,
+        uul.to_user_id,
+        uul.create_time,
+        uul.update_time
+        from user_user_like uul left join
+        sys_user su on uul.to_user_id=su.id
+        where uul.from_user_id=#{fromId}
+        and  date_sub(curdate(),interval 60 day) &lt;= date(uul.update_time)
+    </select>
+    <select id="selectLikeNumById" resultType="java.lang.Integer">
+        select
+        count(1)
+        from user_user_like where status=1
+        and to_user_id=#{userId}
+    </select>
+    <select id="selectMyNewCommentArticle" resultType="com.kzm.blog.common.entity.article.vo.ArticleRecentVo">
+        SELECT
+        a.id,
+        a.title,
+        a.description as summary,
+        a.read_num,
+        a.comment_num,
+        a.update_time
+        FROM
+        comment c inner JOIN article a on c.owner_id=a.id
+        WHERE a.author_id=#{userId}
+         AND date_sub(curdate(),interval 7 day) &lt;= date(c.create_time)
+        GROUP BY a.id
+        ORDER BY a.update_time desc
     </select>
 
 

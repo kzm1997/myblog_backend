@@ -72,4 +72,18 @@ public interface ArticleService extends IService<ArticleEntity> {
      * @return
      */
     List<Recent> getRecentArticle();
+
+    /**
+     * 获取全部文章
+     * @param articleShortBo
+     * @return
+     */
+    Result getAll(ArticleShortBo articleShortBo);
+
+    /**
+     * 管理员删除文章
+     * @param id
+     * @return
+     */
+    Result delteArticleByAdmin(Integer id);
 }

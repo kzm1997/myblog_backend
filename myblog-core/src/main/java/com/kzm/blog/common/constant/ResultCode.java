@@ -26,6 +26,7 @@ public enum ResultCode {
     USeR_PASSWD_ERROR(20008,"密码错误"),
     USER_Register_ERROR(20007, "用户注册错误"),
     USER_AVATAR_ERROR(20008,"头像上传失败"),
+    USER_NICKNAME_ERROR(20009,"昵称已存在"),
 
     /* 系统错误：40001-49999 */
     SYSTEM_INNER_ERROR(40001, "系统内部错误"),

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @Data
 public class UserMaterialBo {
 
+
     private String nickname;
 
     private String sex;

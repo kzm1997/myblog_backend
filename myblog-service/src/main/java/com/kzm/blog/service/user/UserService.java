@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.entity.User.Bo.*;
 import com.kzm.blog.common.entity.User.UserEntity;
+import com.kzm.blog.common.entity.role.bo.UserRoleBo;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.exception.RedisException;
 import org.springframework.web.multipart.MultipartFile;
@@ -115,4 +116,53 @@ public interface UserService extends IService<UserEntity> {
      * @return
      */
     Result getAllUser(UserBo userBo);
+
+    /**
+     * 获取所有后台用户
+     * @param userBo
+     * @return
+     */
+    Result getAllBackUser(UserBo userBo);
+
+    /**
+     * 添加后台用户
+     * @param userBackRegisterBo
+     * @return
+     */
+    Result addBackUser(UserBackRegisterBo userBackRegisterBo);
+
+    /**
+     * 修改后台用户
+     *
+     * @return
+     */
+    Result editBackUser(UserRoleBo userRoleBo);
+
+    /**
+     * 获取自己发表的文章
+     * @return
+     */
+    Result getUserArticles();
+
+    /**
+     * 获取我的动态
+     * @return
+     */
+    Result getDynamic();
+
+    /**
+     * 获取有最新评论的文章
+     * @return
+     */
+    Result getMyArticleComments();
+
+
+    /**
+     * 获取近期热门文章
+     * @return
+     */
+    Result getMyHot();
+
+    Result getTimeLine();
+
 }

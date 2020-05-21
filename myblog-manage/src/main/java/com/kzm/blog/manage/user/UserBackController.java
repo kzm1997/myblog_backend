@@ -1,13 +1,15 @@
 package com.kzm.blog.manage.user;
 
 
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.constant.ResultCode;
+import com.kzm.blog.common.entity.User.Bo.UserBackRegisterBo;
 import com.kzm.blog.common.entity.User.Bo.UserBo;
 import com.kzm.blog.common.entity.User.UserEntity;
+import com.kzm.blog.common.entity.role.bo.UserRoleBo;
 import com.kzm.blog.service.user.UserService;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,9 +28,15 @@ public class UserBackController {
     private UserService userService;
 
     @GetMapping("frontView")
-    @RequiresPermissions("user:frontView")
+    //@RequiresPermissions("user:frontView")
     public Result userList(UserBo userBo) {
         return userService.getAllUser(userBo);
+    }
+
+    @GetMapping("backView")
+    //@RequiresPermissions("user:backView")
+    public Result backuserList(UserBo userBo) {
+        return userService.getAllBackUser(userBo);
     }
 
     @GetMapping("online")
@@ -37,10 +45,10 @@ public class UserBackController {
     }
 
     @GetMapping("forbid")
-    @RequiresPermissions("user:forbid")
-    public Result forbid(@RequestParam("id") Integer id) {
-        boolean b = userService.update(new UserEntity().setStatus(1),
-                new QueryWrapper<UserEntity>().lambda().ge(UserEntity::getId, id));
+    //@RequiresPermissions("user:forbid")
+    public Result forbid(@RequestParam("id") Integer id, @RequestParam("type") Integer type) {
+        boolean b = userService.update(new UserEntity().setStatus(type),
+                new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getId, id));
         if (b == false) {
             return Result.error(ResultCode.DATA_UPDATE_ERR);
         }
@@ -48,8 +56,17 @@ public class UserBackController {
     }
 
     @PostMapping("add")
-    public Result useradd() {
-        return null;
+    //@RequiresPermissions("user:add")
+    public Result useradd(@RequestBody UserBackRegisterBo userBackRegisterBo) {
+        return userService.addBackUser(userBackRegisterBo);
+
+    }
+
+    @PostMapping("edit")
+    //@RequiresPermissions("user:edit")
+    public Result userEdit(@RequestBody UserRoleBo  userRoleBo) {
+       return userService.editBackUser(userRoleBo);
+
     }
 
 

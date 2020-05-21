@@ -50,14 +50,14 @@
         from article a inner join sys_user u on a.author_id=u.id
         inner join article_category ac on a.id=ac.article_id
         <where>
+            a.publish=1
             <if test="articleShortBo.id==0">
-
             </if>
             <if test="articleShortBo.id!=0 and articleShortBo.id !=-1">
-                ac.category_id=#{articleShortBo.id}
+              and   ac.category_id=#{articleShortBo.id}
             </if>
         </where>
-
+        order by update_time desc
     </select>
 
     <select id="selectCountLikeByUId" resultType="java.lang.Integer">
@@ -105,5 +105,61 @@
       date_sub(curdate(), interval 7 day) &lt;= date(update_time)
       ) as l
       group by days
+    </select>
+    <select id="selectShortByTagOrNickname" resultType="com.kzm.blog.common.entity.article.vo.ArticleAllVo">
+        select
+        distinct a.id,
+        a.title,
+        a.publish,
+        a.recommend,
+        a.content,
+        a.description,
+        a.read_num,
+        a.comment_num,
+        a.update_time,
+        u.nickname
+        from article a inner join sys_user u on a.author_id=u.id
+        inner join article_category ac on a.id=ac.article_id
+        <where>
+            <if test="articleShortBo.id==0 or articleShortBo.id==null">
+            </if>
+            <if test="articleShortBo.id!=0 and articleShortBo.id !=-1 and articleShortBo.id!=null">
+                ac.category_id=#{articleShortBo.id}
+            </if>
+            <if test="articleShortBo.nickname!=null and articleShortBo.nickname !=''">
+                and u.nickname like concat('%',#{articleShortBo.nickname},'%')
+            </if>
+        </where>
+    </select>
+    <select id="selectArticleWord" resultType="java.lang.Integer">
+        SELECT
+        SUM(length(content))
+        FROM
+         article
+         WHERE author_id=#{authorId}
+    </select>
+    <select id="selectHotRecent" resultType="com.kzm.blog.common.entity.article.vo.ArticleRecentVo">
+         select
+         id,
+         title,
+         description as summary,
+         read_num,
+         comment_num
+         from article
+         where author_id=#{userId}
+         and publish=1
+          and date_sub(curdate(),interval 30 day) &lt;= date(update_time)
+         order by read_num
+    </select>
+    <select id="getTimeLine" resultType="com.kzm.blog.common.entity.article.vo.ArticleShortVo">
+        select
+        id,
+        title,
+        description,
+        update_time
+        from article
+        where author_id=#{id}
+        and publish=1
+        order by update_time desc
     </select>
 </mapper>

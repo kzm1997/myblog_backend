@@ -18,7 +18,6 @@ public class CommentSonVo {
 
     private Integer id;
 
-    private Integer commentId;
 
     private Integer fromId;
 

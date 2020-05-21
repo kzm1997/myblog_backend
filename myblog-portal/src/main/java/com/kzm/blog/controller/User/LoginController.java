@@ -35,8 +35,9 @@ public class LoginController {
 
     @PostMapping("register")
     @Log(module = "注册", operation = "注册")
-    public void register(@RequestBody UserRegisterBo userRegisterBo) throws Exception {
+    public Result register(@RequestBody UserRegisterBo userRegisterBo) throws Exception {
         this.userService.register(userRegisterBo);
+        return  Result.success();
     }
 
     @PostMapping("/login")
@@ -65,6 +66,8 @@ public class LoginController {
         }
         return Result.success();
     }
+
+
 
 
 }

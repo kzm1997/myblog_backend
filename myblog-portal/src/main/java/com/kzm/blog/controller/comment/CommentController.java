@@ -6,6 +6,7 @@ import com.kzm.blog.common.annotation.Log;
 import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.comment.CommentEntity;
 import com.kzm.blog.common.entity.comment.bo.CommentBaseBo;
+import com.kzm.blog.common.entity.comment.bo.CommentListBo;
 import com.kzm.blog.common.entity.comment.bo.CommentSonBo;
 import com.kzm.blog.common.entity.comment.bo.LikeBo;
 import com.kzm.blog.service.article.ArticleService;
@@ -36,8 +37,8 @@ public class CommentController {
     }
 
     @GetMapping("getAllComment")
-    public Result getAllComments(@RequestParam("id") Integer id) {
-        return Result.success(commentService.selectAllComment(id));
+    public Result getAllComments(CommentListBo commentListBo) {
+        return  commentService.selectAllComment(commentListBo);
     }
 
     @GetMapping("deleteComment")

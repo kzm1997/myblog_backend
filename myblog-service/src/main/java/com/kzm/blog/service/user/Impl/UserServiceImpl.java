@@ -12,7 +12,13 @@ import com.kzm.blog.common.base.BaseEntity;
 import com.kzm.blog.common.constant.ResultCode;
 import com.kzm.blog.common.entity.User.ActiveUser;
 import com.kzm.blog.common.entity.User.Bo.*;
+import com.kzm.blog.common.entity.User.TimeComparator;
 import com.kzm.blog.common.entity.User.vo.*;
+import com.kzm.blog.common.entity.article.ArticleEntity;
+import com.kzm.blog.common.entity.article.vo.ArticleRecentVo;
+import com.kzm.blog.common.entity.article.vo.ArticleShortVo;
+import com.kzm.blog.common.entity.comment.CommentEntity;
+import com.kzm.blog.common.entity.role.bo.UserRoleBo;
 import com.kzm.blog.common.utils.*;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.constants.Base;
@@ -21,6 +27,7 @@ import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.exception.RedisException;
 import com.kzm.blog.common.properties.KBlogProperties;
 import com.kzm.blog.mapper.article.ArticleMapper;
+import com.kzm.blog.mapper.comment.CommentMapper;
 import com.kzm.blog.mapper.user.UserMapper;
 import com.kzm.blog.service.cache.CacheService;
 import com.kzm.blog.service.redis.RedisService;
@@ -30,13 +37,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +63,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Autowired
     private ArticleMapper articleMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     @Autowired
     private KBlogProperties blogProperties;
@@ -84,8 +93,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         userEntity.setAvatar(Base.user.DEFAULT_AVATAR);
         userEntity.setStatus(Base.user.STATUS_VALID);
         userEntity.setSex(Base.user.SEX_UNKNOW);
-
         userEntity.setEmail(userRegisterBo.getEmail());
+        userEntity.setNickname("");
         try {
             userMapper.insert(userEntity);
         } catch (Exception e) {
@@ -107,7 +116,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     @Override
     public Result login(UserLoginBo userLoginBo) throws KBlogException, RedisException, JsonProcessingException {
         UserEntity userEntity = new UserEntity();
-        UserEntity entity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda().eq(UserEntity::getAccount, userLoginBo.getAccount()));
+        UserEntity entity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda()
+                .eq(UserEntity::getAccount, userLoginBo.getAccount()));
         if (entity == null) {
             throw new KBlogException(ResultCode.USER_NOT_EXIST);
         }
@@ -209,6 +219,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             throw new KBlogException(ResultCode.USeR_PASSWD_ERROR);
         }
         //修改密码
+        userTest.setPassword(passWdBo.getNewPassWd());
         PasswordHelper.encryptPassword(userTest);
         BeanUtil.copyProperties(userTest, userEntity, CopyOptions.create().setIgnoreNullValue(true));
         userMapper.update(userEntity, new QueryWrapper<UserEntity>().lambda().eq(BaseEntity::getId, userEntity.getId()));
@@ -368,9 +379,139 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             record.setArticles(artcileCount);
         }
         page.setRecords(records);
-        MyPage<UserListVo> myPage=new MyPage<UserListVo>().getMyPage(page);
+        MyPage<UserListVo> myPage = new MyPage<UserListVo>().getMyPage(page);
+        return Result.success(myPage);
+
+    }
+
+    @Override
+    public Result getAllBackUser(UserBo userBo) {
+        Page<UserListVo> page = new Page<>(userBo.getPageNum(), userBo.getPageSize());
+        page = (Page<UserListVo>) userMapper.getAllBackUser(page, userBo);
+        MyPage<UserListVo> myPage = new MyPage<UserListVo>().getMyPage(page);
         return Result.success(myPage);
     }
 
+
+    @Override
+    @Transactional
+    public Result addBackUser(UserBackRegisterBo userBackRegisterBo) {
+        UserEntity userEntity = new UserEntity();
+        BeanUtil.copyProperties(userBackRegisterBo, userEntity);
+        boolean account = this.checkParam(userEntity.getAccount(), "account");
+        if (account) {
+            throw new KBlogException(ResultCode.USER_HAS_EXISTED);
+        }
+        boolean email = this.checkParam(userEntity.getEmail(), "email");
+        if (email) {
+            throw new KBlogException(ResultCode.EMAIL_HAS_EXISTED);
+        }
+        boolean nickname = this.checkParam(userEntity.getNickname(), "nickname");
+        if (nickname) {
+            throw new KBlogException(ResultCode.USER_NICKNAME_ERROR);
+        }
+        PasswordHelper.encryptPassword(userEntity);
+        int i = userMapper.insert(userEntity);
+        if (i == 0) {
+            return Result.error(ResultCode.DATA_INSERT_ERR);
+        }
+        int b = userMapper.addBackUserRole(userEntity.getId(), userBackRegisterBo.getRoleId());
+        if (b == 0) {
+            return Result.error(ResultCode.DATA_INSERT_ERR);
+        }
+        return Result.success();
+    }
+
+    @Override
+    public Result editBackUser(UserRoleBo userRoleBo) {
+        int b = userMapper.updateUserRole(userRoleBo.getUserId(), userRoleBo.getRoleId());
+        if (b == 0) {
+            return Result.error(ResultCode.DATA_UPDATE_ERR);
+        }
+        return Result.success();
+    }
+
+    @Override
+    public Result getUserArticles() {
+        String userName = KblogUtils.getUserName();
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda()
+                .eq(UserEntity::getAccount, userName));
+        List<ArticleRecentVo> myArticleRecent = userMapper.getArticleRecent(userEntity.getId());
+        myArticleRecent.forEach(articleRecentVo -> articleRecentVo.setType("article"));
+        return Result.success(myArticleRecent);
+    }
+
+    @Override
+    public Result getDynamic() {
+        String userName = KblogUtils.getUserName();
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda()
+                .eq(UserEntity::getAccount, userName));
+        //获取文章
+        List<ArticleRecentVo> myArticleRecent = userMapper.getArticleRecent(userEntity.getId());
+        myArticleRecent.forEach(articleRecentVo -> articleRecentVo.setType("myArticle"));
+        //获取评论
+        List<CommentEntity> commentEntities = commentMapper.selectList(new QueryWrapper<CommentEntity>().lambda()
+                .eq(CommentEntity::getFromId, userEntity.getId()).gt(CommentEntity::getCreateTime, LocalDate.now().plusMonths(-1)));
+        List<ArticleRecentVo> collect = commentEntities.stream().map(commentEntity -> {
+            ArticleRecentVo articleRecentVo = new ArticleRecentVo();
+            articleRecentVo.setComment(commentEntity.getContent());
+            articleRecentVo.setUpdateTime(commentEntity.getCreateTime());
+            articleRecentVo.setId(commentEntity.getId());
+            ArticleEntity articleEntity = articleMapper.selectById(commentEntity.getOwnerId());
+            articleRecentVo.setReadNum(articleEntity.getReadNum());
+            articleRecentVo.setCommentNum(articleEntity.getCommentNum());
+            articleRecentVo.setSummary(articleEntity.getDescription());
+            articleRecentVo.setTitle(articleEntity.getTitle());
+            articleRecentVo.setId(articleEntity.getId());
+            articleRecentVo.setType("comment");
+            return articleRecentVo;
+        }).collect(Collectors.toList());
+        //查询关注用户
+        List<UserLikeVo> userLikeVos = userMapper.selectUserLike(userEntity.getId());
+        for (UserLikeVo userLikeVo : userLikeVos) {
+            userLikeVo.setLikeFlag(true);
+            userLikeVo.setTotalWord(articleMapper.selectArticleWord(userLikeVo.getToUserId()));
+            userLikeVo.setLikeNum(userMapper.selectLikeNumById(userLikeVo.getToUserId()));
+            userLikeVo.setType("like");
+        }
+        ArrayList<TimeComparator> list = new ArrayList<>();
+        list.addAll(myArticleRecent);
+        list.addAll(collect);
+        list.addAll(userLikeVos);
+        TimeComparator[] timeComparators=new TimeComparator[]{};
+        TimeComparator[] comparators = list.toArray(timeComparators);
+        Arrays.sort(comparators);
+        return Result.success(comparators);
+    }
+
+    @Override
+    public Result getMyArticleComments() {
+        String userName = KblogUtils.getUserName();
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda()
+                .eq(UserEntity::getAccount, userName));
+        //获取我的最新评论文章
+        List<ArticleRecentVo> articleRecentVos = userMapper.selectMyNewCommentArticle(userEntity.getId());
+        articleRecentVos.forEach(articleRecentVo -> articleRecentVo.setType("article"));
+        return Result.success(articleRecentVos);
+    }
+
+    @Override
+    public Result getMyHot() {
+        String userName = KblogUtils.getUserName();
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda()
+                .eq(UserEntity::getAccount, userName));
+        List<ArticleRecentVo> articleRecentVos = articleMapper.selectHotRecent(userEntity.getId());
+        articleRecentVos.forEach(articleRecentVo -> articleRecentVo.setType("article"));
+        return Result.success(articleRecentVos);
+    }
+
+    @Override
+    public Result getTimeLine() {
+        String userName = KblogUtils.getUserName();
+        UserEntity userEntity = userMapper.selectOne(new QueryWrapper<UserEntity>().lambda()
+                .eq(UserEntity::getAccount, userName));
+       List<ArticleShortVo> list=articleMapper.getTimeLine(userEntity.getId());
+        return Result.success(list);
+    }
 }
 

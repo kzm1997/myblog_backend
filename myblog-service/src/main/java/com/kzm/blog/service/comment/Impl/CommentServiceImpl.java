@@ -1,7 +1,9 @@
 package com.kzm.blog.service.comment.Impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kzm.blog.common.Result;
 import com.kzm.blog.common.constant.ResultCode;
@@ -10,12 +12,15 @@ import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.comment.CommentEntity;
 import com.kzm.blog.common.entity.comment.CommentUserLikeEntity;
 import com.kzm.blog.common.entity.comment.bo.CommentBaseBo;
+import com.kzm.blog.common.entity.comment.bo.CommentListBo;
 import com.kzm.blog.common.entity.comment.bo.CommentSonBo;
 import com.kzm.blog.common.entity.comment.bo.LikeBo;
 import com.kzm.blog.common.entity.comment.vo.CommentSonVo;
 import com.kzm.blog.common.entity.comment.vo.CommentVo;
+import com.kzm.blog.common.entity.log.vo.Recent;
 import com.kzm.blog.common.exception.KBlogException;
 import com.kzm.blog.common.utils.KblogUtils;
+import com.kzm.blog.common.utils.MyPage;
 import com.kzm.blog.mapper.article.ArticleMapper;
 import com.kzm.blog.mapper.comment.CommentMapper;
 import com.kzm.blog.mapper.comment.CommentUserLikeMapper;
@@ -28,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -63,7 +69,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         commentEntity.setOwnerId(commentBaseBo.getId());
         commentEntity.setContent(commentBaseBo.getContent());
         commentEntity.setFromId(id);
-        commentEntity.setTold(id);
+        commentEntity.setToId(id);
         commentEntity.setParentId(0);
         commentEntity.setLikeNum(0);
         int i = commentMapper.insert(commentEntity);
@@ -75,18 +81,32 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         if (result == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
-        //获取评论
-        List<CommentVo> commentVos = this.selectAllComment(commentBaseBo.getId());
-        return Result.success(commentVos);
+        CommentVo commentVo = new CommentVo();
+        UserEntity fromUser = userMapper.selectById(commentEntity.getFromId());
+        UserEntity toUser = userMapper.selectById(commentEntity.getToId());
+        commentVo.setContent(commentEntity.getContent())
+                .setDate(commentEntity.getCreateTime())
+                .setFromId(commentEntity.getFromId())
+                .setFromAvatar(fromUser.getAvatar())
+                .setFromName(fromUser.getNickname())
+                .setToId(toUser.getId())
+                .setToName(toUser.getNickname())
+                .setToAvatar(toUser.getAvatar())
+                .setLike(false)
+                .setLikeNum(commentEntity.getLikeNum())
+                .setReply(new ArrayList<CommentSonVo>())
+                .setId(commentEntity.getId());
+        return Result.success(commentVo);
     }
 
     @Override
-    public List<CommentVo> selectAllComment(Integer id) {
+    public Result selectAllComment(CommentListBo commentListBo) {
         String userName = KblogUtils.getUserName();
         Integer userId = userMapper.getIdByAccount(userName);
         //获取文章下的顶级评论
-        List<CommentEntity> commentEntities = commentMapper.selectList(new QueryWrapper<CommentEntity>().lambda().eq(CommentEntity::getOwnerId, id)
-                .eq(CommentEntity::getParentId, 0).orderByDesc(CommentEntity::getCreateTime));
+        Page<CommentEntity> page = new Page<>(commentListBo.getPageNum(), commentListBo.getPageSize());
+        page = commentMapper.selectMaps(page, commentListBo);
+        List<CommentEntity> commentEntities = page.getRecords();
         List<CommentVo> collect = commentEntities.stream().map(getCommentVo).collect(Collectors.toList());
         //设置是否点赞
         List<CommentUserLikeEntity> userLikeEntities = commentUserLikeMapper.selectList(new QueryWrapper<CommentUserLikeEntity>().lambda()
@@ -100,24 +120,29 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         for (CommentVo commentVo : collect) {
             List<CommentEntity> entityList = commentMapper.selectList(new QueryWrapper<CommentEntity>().lambda()
                     .eq(CommentEntity::getParentId, commentVo.getId()).orderByAsc(CommentEntity::getCreateTime));
-
             List<CommentSonVo> commentSonVos = entityList.stream().map(getCommentSonVo).collect(Collectors.toList());
             commentVo.setReply(commentSonVos);
         }
-        return collect;
+        Page<CommentVo> voPage = new Page<>();
+        voPage.setRecords(collect);
+        voPage.setTotal(page.getTotal());
+        voPage.setCurrent(page.getCurrent());
+        voPage.setSize(page.getSize());
+        MyPage<CommentVo> myPage = new MyPage<CommentVo>().getMyPage(voPage);
+        return Result.success(myPage);
     }
 
     private Function<CommentEntity, CommentSonVo> getCommentSonVo = (entity) -> {
         CommentSonVo commentSonVo = new CommentSonVo();
         UserEntity formUser = userMapper.selectById(entity.getFromId());
-        UserEntity tomUser = userMapper.selectById(entity.getTold());
+        UserEntity tomUser = userMapper.selectById(entity.getToId());
         commentSonVo.setId(entity.getId())
                 .setContent(entity.getContent())
                 .setDate(entity.getCreateTime())
                 .setFromId(entity.getFromId())
                 .setFromName(formUser.getNickname())
                 .setFromAvatar(formUser.getAvatar())
-                .setToId(entity.getTold())
+                .setToId(entity.getToId())
                 .setToName(tomUser.getNickname())
                 .setToAvatar(tomUser.getAvatar());
         return commentSonVo;
@@ -127,14 +152,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         Integer userId = userMapper.getIdByAccount(userName);
         CommentVo commentVo = new CommentVo();
         UserEntity formUser = userMapper.selectById(entity.getFromId());
-        UserEntity tomUser = userMapper.selectById(entity.getTold());
+        UserEntity tomUser = userMapper.selectById(entity.getToId());
         commentVo.setId(entity.getId())
                 .setContent(entity.getContent())
                 .setDate(entity.getCreateTime())
                 .setFromId(entity.getFromId())
                 .setFromName(formUser.getNickname())
                 .setFromAvatar(formUser.getAvatar())
-                .setToId(entity.getTold())
+                .setToId(entity.getToId())
                 .setToName(tomUser.getNickname())
                 .setToAvatar(tomUser.getAvatar())
                 .setLikeNum(entity.getLikeNum());
@@ -149,7 +174,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         commentEntity.setContent(commentSonBo.getContent())
                 .setParentId(commentSonBo.getParentId())
                 .setOwnerId(commentSonBo.getId())
-                .setTold(commentSonBo.getToId())
+                .setToId(commentSonBo.getToId())
                 .setFromId(id)
                 .setLikeNum(0);
         int i = commentMapper.insert(commentEntity);
@@ -161,7 +186,19 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         if (result == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
-        return Result.success();
+        UserEntity fromUser = userMapper.selectById(commentEntity.getFromId());
+        UserEntity toUser = userMapper.selectById(commentEntity.getToId());
+        CommentSonVo commentSonVo = new CommentSonVo();
+        commentSonVo.setId(commentEntity.getId())
+                .setContent(commentEntity.getContent())
+                .setDate(commentEntity.getCreateTime())
+                .setFromId(commentEntity.getFromId())
+                .setFromName(fromUser.getNickname())
+                .setFromAvatar(fromUser.getAvatar())
+                .setToId(toUser.getId())
+                .setToName(toUser.getNickname())
+                .setToAvatar(toUser.getAvatar());
+        return Result.success(commentSonVo);
     }
 
     @Override
@@ -228,34 +265,34 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
                 //减少文章评论数
                 ArticleEntity articleEntity = articleMapper.selectOne(new QueryWrapper<ArticleEntity>().lambda()
                         .eq(ArticleEntity::getId, commentEntity.getOwnerId()));
-                articleEntity.setCommentNum(articleEntity.getCommentNum()-(commentEntities.size()+1));
-                articleMapper.update(articleEntity,new QueryWrapper<ArticleEntity>().lambda()
-                        .eq(ArticleEntity::getId,articleEntity.getId()));
+                articleEntity.setCommentNum(articleEntity.getCommentNum() - (commentEntities.size() + 1));
+                articleMapper.update(articleEntity, new QueryWrapper<ArticleEntity>().lambda()
+                        .eq(ArticleEntity::getId, articleEntity.getId()));
             } catch (Exception e) {
-               log.error("评论删除错误 {}",e);
-               throw new KBlogException(ResultCode.DATA_DELTE_ERR);
+                log.error("评论删除错误 {}", e);
+                throw new KBlogException(ResultCode.DATA_DELTE_ERR);
             }
         } else {
-            //如果子评论下还有@的子评论,一并删除
             try {
-                List<CommentEntity> commentEntities = commentMapper.selectList(new QueryWrapper<CommentEntity>()
-                        .lambda().eq(CommentEntity::getTold, commentEntity.getFromId())
-                        .eq(CommentEntity::getParentId, commentEntity.getParentId()).ne(CommentEntity::getId,id));
-                if (commentEntities.size() > 0) {
-                    commentMapper.deleteBatchIds(commentEntities.stream().map(CommentEntity::getId).collect(Collectors.toList()));
-                }
                 commentMapper.deleteById(id);
                 //减少文章评论数
                 ArticleEntity articleEntity = articleMapper.selectOne(new QueryWrapper<ArticleEntity>().lambda()
                         .eq(ArticleEntity::getId, commentEntity.getOwnerId()));
-                articleEntity.setCommentNum(articleEntity.getCommentNum()-(commentEntities.size()+1));
-                articleMapper.update(articleEntity,new QueryWrapper<ArticleEntity>().lambda()
-                        .eq(ArticleEntity::getId,articleEntity.getId()));
+                articleEntity.setCommentNum(articleEntity.getCommentNum() - 1);
+                articleMapper.update(articleEntity, new QueryWrapper<ArticleEntity>().lambda()
+                        .eq(ArticleEntity::getId, articleEntity.getId()));
             } catch (Exception e) {
-                log.error("评论删除错误 {}",e);
+                log.error("评论删除错误 {}", e);
                 throw new KBlogException(ResultCode.DATA_DELTE_ERR);
             }
         }
         return Result.success();
+    }
+
+
+    @Override
+    public Result getommentLine() {
+        List<Recent> recents = commentMapper.selectLine();
+        return Result.success(recents);
     }
 }

@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @Version
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest()
 public class MapperTest {
 
     @Autowired
@@ -74,5 +74,15 @@ public class MapperTest {
         categoryMapper.selectList(wrapper);
 
 
+    }
+
+
+    @Test
+    public void test2(){
+        List<CategoryEntity> categoryEntities = categoryMapper.selectList(new QueryWrapper<>());
+        for (CategoryEntity categoryEntity : categoryEntities) {
+            categoryEntity.setAvatar("http://localhost:8089/category"+categoryEntity.getAvatar());
+            categoryMapper.update(categoryEntity,new QueryWrapper<CategoryEntity>().lambda().eq(CategoryEntity::getId,categoryEntity.getId()));
+        }
     }
 }

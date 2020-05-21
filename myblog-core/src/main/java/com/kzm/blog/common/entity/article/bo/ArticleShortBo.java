@@ -12,5 +12,12 @@ import lombok.Data;
 @Data
 public class ArticleShortBo extends PageBo {
 
+    /**
+     * 分类id
+     */
     private Integer id;
+
+    private String nickname;
+
+    private Integer publish;
 }

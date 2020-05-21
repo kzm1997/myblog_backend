@@ -12,10 +12,7 @@ import com.kzm.blog.common.entity.User.vo.UserAuthorVo;
 import com.kzm.blog.common.entity.article.ArticleEntity;
 import com.kzm.blog.common.entity.article.bo.ArticleShortBo;
 import com.kzm.blog.common.entity.article.bo.ArticleUploadBo;
-import com.kzm.blog.common.entity.article.vo.ArticleEditVo;
-import com.kzm.blog.common.entity.article.vo.ArticleRecommendVo;
-import com.kzm.blog.common.entity.article.vo.ArticleShortVo;
-import com.kzm.blog.common.entity.article.vo.ArticleViewVo;
+import com.kzm.blog.common.entity.article.vo.*;
 import com.kzm.blog.common.entity.category.CategoryEntity;
 import com.kzm.blog.common.entity.category.vo.CategoryNameVo;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
@@ -161,15 +158,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
         if (i == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
-
         List<Integer> tags = articleUploadBo.getTags();
         tags.add(0, Integer.parseInt(articleUploadBo.getCategory()));
         int flag = categoryMapper.insertRelation(articleEntity.getId(), tags);
         if (flag == 0) {
             throw new KBlogException(ResultCode.DATA_INSERT_ERR);
         }
-
-
         return Result.success();
     }
 
@@ -251,5 +245,31 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
     @Override
     public List<Recent> getRecentArticle() {
         return articleMapper.getRecentArticle();
+    }
+
+    @Override
+    public Result getAll(ArticleShortBo articleShortBo) {
+        Page<ArticleAllVo> page = new Page<>(articleShortBo.getPageNum(), articleShortBo.getPageSize());
+        page = (Page<ArticleAllVo>) articleMapper.selectShortByTagOrNickname(page, articleShortBo);
+        //查询文章的分类
+        List<ArticleAllVo> articleAllVos = page.getRecords();
+        for (ArticleAllVo articleAllVo : articleAllVos) {
+            List<CategoryNameVo> categoryNameVos = categoryMapper.selectByArticleId(articleAllVo.getId());
+            List<CategoryShortVo> categoryShortVos = categoryNameVos.stream().map(nameVo -> {
+                CategoryShortVo temp = new CategoryShortVo();
+                BeanUtil.copyProperties(nameVo, temp);
+                return temp;
+            }).collect(Collectors.toList());
+            articleAllVo.setCategorys(categoryShortVos);
+        }
+        page.setRecords(articleAllVos);
+        MyPage<ArticleAllVo> myPage = new MyPage<ArticleAllVo>().getMyPage(page);
+        return Result.success(myPage);
+    }
+
+
+    @Override
+    public Result delteArticleByAdmin(Integer id) {
+        return null;
     }
 }

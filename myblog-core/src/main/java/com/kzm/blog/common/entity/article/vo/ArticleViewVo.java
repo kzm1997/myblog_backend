@@ -16,6 +16,8 @@ import java.util.List;
 @Data
 public class ArticleViewVo {
 
+    private Integer id;
+
     private LocalDateTime updateTime;
 
     private String title;

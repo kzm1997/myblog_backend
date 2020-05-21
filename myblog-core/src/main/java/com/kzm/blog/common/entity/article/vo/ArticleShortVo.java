@@ -1,6 +1,7 @@
 package com.kzm.blog.common.entity.article.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -16,6 +17,7 @@ import java.util.List;
  */
 @Data
 @Accessors(chain = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ArticleShortVo {
 
     private Integer id;
@@ -38,4 +40,6 @@ public class ArticleShortVo {
     private String avatar;
 
     private String nickname;
+    @JsonIgnore
+    private String publish;
 }

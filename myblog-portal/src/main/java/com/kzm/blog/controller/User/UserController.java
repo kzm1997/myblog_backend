@@ -78,4 +78,29 @@ public class UserController {
         return userService.userLike(userId,type);
     }
 
+    @GetMapping("userArticle")
+    public Result userArticle(){
+        return userService.getUserArticles();
+    }
+
+    @GetMapping("userDynamic")
+    public Result getuserDynamic(){
+        return userService.getDynamic();
+    }
+
+    @GetMapping("myComment")
+    public Result getMyArticleComment(){
+        return userService.getMyArticleComments();
+    }
+    @GetMapping("myHot")
+    public Result getMyHot(){
+        return userService.getMyHot();
+    }
+
+    @GetMapping("timeLine")
+    public Result gettimeLine(){
+        return  userService.getTimeLine();
+    }
+
+
 }

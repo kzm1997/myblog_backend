@@ -86,5 +86,11 @@
        group by c.id
 
     </select>
+    <select id="getArticleCount" resultType="java.lang.Integer">
+        SELECT
+         COUNT(*)
+          FROM article_category WHERE category_id=#{Id}
+    </select>
+
 
 </mapper>

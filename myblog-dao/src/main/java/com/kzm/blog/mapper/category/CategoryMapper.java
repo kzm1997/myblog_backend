@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kzm.blog.common.entity.category.CategoryEntity;
 import com.kzm.blog.common.entity.category.bo.CategoryBo;
 import com.kzm.blog.common.entity.category.vo.CategoryNameVo;
+import com.kzm.blog.common.entity.category.vo.CategoryPie;
 import com.kzm.blog.common.entity.category.vo.CategoryShortVo;
 import com.kzm.blog.common.entity.category.vo.CategoryVo;
 import org.apache.ibatis.annotations.Mapper;
@@ -45,5 +46,7 @@ public interface CategoryMapper extends BaseMapper<CategoryEntity> {
 
     int deleteArticle(@Param("id") Integer id);
 
+
+    int getArticleCount(@Param("Id") Integer categroyId);
 }
 

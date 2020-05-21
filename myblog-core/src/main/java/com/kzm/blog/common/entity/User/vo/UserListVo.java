@@ -26,6 +26,8 @@ public class UserListVo {
 
     private Integer status;
 
-    private LocalDate updateTime;
+    private String roleName;
+
+    private LocalDate createTime;
 
 }

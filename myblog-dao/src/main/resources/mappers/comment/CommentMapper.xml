@@ -14,7 +14,7 @@
         delete  from  comment where  owner_id=#{id}
     </delete>
     <delete id="deleteUsrLike">
-        delete  from  comment_user_like
+        delete from comment_user_like
         <where>
             comment_id in
             <foreach collection="collect" index="index" item="item" open="(" separator="," close=")">
@@ -22,4 +22,35 @@
             </foreach>
         </where>
     </delete>
+    <select id="selectMaps" resultType="com.kzm.blog.common.entity.comment.CommentEntity">
+        select
+         id,
+         create_time as createTime,
+         owner_id as ownerId,
+         from_id as fromId,
+         like_num as likeNum,
+         content,
+         to_id as toId,
+         parent_id as parentId
+         from  comment
+        where owner_id=#{commentListBo.id} and parent_id=0
+        order by create_time desc
+    </select>
+
+
+    <select id="selectLine" resultType="com.kzm.blog.common.entity.log.vo.Recent">
+    select
+      date_format(l.create_time, '%m-%d') days,
+      count(1) as count
+      from
+      (select
+      *
+      from
+      comment
+      where
+      date_sub(curdate(), interval 7 day) &lt;= date(create_time)
+      ) as l
+      group by days
+    </select>
+
 </mapper>

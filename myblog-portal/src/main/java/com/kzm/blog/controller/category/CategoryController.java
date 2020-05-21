@@ -66,7 +66,7 @@ public class CategoryController {
      * @param id
      * @return
      */
-    @GetMapping("/tagByCategory/")
+    @GetMapping("/tagByCategory")
     public Result getTag(@RequestParam("categoryId") Integer id) {
         return categoryService.getTag(id);
     }

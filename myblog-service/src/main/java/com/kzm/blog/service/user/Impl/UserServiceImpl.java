@@ -265,6 +265,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     @Override
     public Result logout() {
         //todo 退出登录
+        HttpServletRequest httpServeltRequest = HttpContextUtils.getHttpServeltRequest();
+        String header = httpServeltRequest.getHeader(Base.TOKEN);
+        redisService.del(Base.TOKEN_CACHE_PREFIX+"."+header);
         return null;
     }
 

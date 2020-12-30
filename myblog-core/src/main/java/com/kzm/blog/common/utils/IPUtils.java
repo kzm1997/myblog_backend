@@ -2,6 +2,8 @@ package com.kzm.blog.common.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +26,7 @@ public class IPUtils {
       * @param request
      * @return
      */
+
     public static String getIpaddr(HttpServletRequest request){
         String ip=null;
          ip = request.getHeader("x-forwarded-for");
